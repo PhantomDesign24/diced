@@ -1,0 +1,1103 @@
+/*
+* 파일명: game.css
+* 위치: /game/css/game.css
+* 기능: 주사위 게임 전용 스타일시트 (그누보드5 독립)
+* 작성일: 2025-06-12
+* 수정일: 2025-06-12
+*/
+
+/* ===================================
+* CSS 리셋 및 기본 설정
+* =================================== */
+
+/* 게임 영역 전체 리셋 */
+.game-container * {
+    box-sizing: border-box !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+}
+
+/* 바디 스타일 강제 적용 */
+body.game-body {
+    background: #f8f9fa !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #333 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    line-height: 1.5 !important;
+}
+
+/* 게임 컨테이너 */
+.game-container {
+    max-width: 420px !important;
+    margin: 0 auto !important;
+    padding: 16px 0 !important;
+    min-height: 100vh !important;
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+/* ===================================
+* 카드 스타일 (그누보드 충돌 방지)
+* =================================== */
+
+/* 기본 카드 */
+.game-container .card {
+    border: 1px solid #e9ecef !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    background-color: #ffffff !important;
+    margin-bottom: 16px !important;
+    position: relative !important;
+    display: block !important;
+    word-wrap: break-word !important;
+}
+/* ===================================
+* 라운드 정보 카드 전용 CSS
+* =================================== */
+
+/* 라운드 정보 카드 메인 */
+.game-container .card.round-info.text-white.border-0 {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/* 라운드 정보 카드에 미묘한 패턴 추가 */
+.game-container .card.round-info.text-white.border-0::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") !important;
+    pointer-events: none !important;
+}
+
+/* 카드 바디 */
+.game-container .card.round-info.text-white.border-0 .card-body {
+	width:100%;
+    padding: 24px !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* 회차 정보 텍스트 */
+.game-container .card.round-info.text-white.border-0 h5 {
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.game-container .card.round-info.text-white.border-0 p {
+    margin: 0 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+}
+
+/* 타이머 디스플레이 */
+.game-container .card.round-info.text-white.border-0 .timer-display {
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    color: #f39c12 !important;
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace !important;
+    text-shadow: 0 2px 8px rgba(243, 156, 18, 0.4) !important;
+    letter-spacing: 2px !important;
+    line-height: 1 !important;
+}
+
+/* 주사위 아이콘 */
+.game-container .card.round-info.text-white.border-0 .bi-dice-6 {
+    color: rgba(255, 255, 255, 0.95) !important;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25)) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.game-container .card.round-info.text-white.border-0 .bi-dice-6:hover {
+    transform: rotate(5deg) scale(1.05) !important;
+}
+
+/* 텍스트 투명도 조정 */
+.game-container .card.round-info.text-white.border-0 .opacity-75 {
+    opacity: 0.85 !important;
+}
+
+/* 반응형 조정 */
+@media (max-width: 375px) {
+    .game-container .card.round-info.text-white.border-0 .card-body {
+        padding: 20px !important;
+    }
+    
+    .game-container .card.round-info.text-white.border-0 .timer-display {
+        font-size: 1.6rem !important;
+        letter-spacing: 1px !important;
+    }
+    
+    .game-container .card.round-info.text-white.border-0 h5 {
+        font-size: 1.2rem !important;
+    }
+}
+
+/* 다크 테마 버전 (선택사항) */
+.game-container .card.round-info.text-white.border-0.dark-theme {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 블루 테마 버전 (선택사항) */
+.game-container .card.round-info.text-white.border-0.blue-theme {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3) !important;
+}
+
+/* 그린 테마 버전 (선택사항) */
+.game-container .card.round-info.text-white.border-0.green-theme {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3) !important;
+}
+/* 카드 바디 */
+.game-container .card-body {
+    padding: 20px !important;
+    flex: 1 1 auto !important;
+}
+
+/* 라운드 정보 카드 */
+.game-container .round-info {
+    color: white !important;
+    border: none !important;
+}
+
+/* 결과 표시 카드 */
+.game-container .dice-result {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    text-align: center !important;
+}
+
+/* ===================================
+* 주사위 스타일 (독립)
+* =================================== */
+
+/* 주사위 컨테이너 */
+.game-container .dice-container {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    margin: 16px 0 !important;
+    align-items: center !important;
+}
+
+/* 주사위 */
+.game-container .dice {
+    width: 50px !important;
+    height: 50px !important;
+    background: #ffffff !important;
+    border: 2px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+    flex-shrink: 0 !important;
+}
+
+/* 주사위 점 */
+.game-container .dice-dot {
+    width: 6px !important;
+    height: 6px !important;
+    background: #495057 !important;
+    border-radius: 50% !important;
+    position: absolute !important;
+    display: block !important;
+}
+
+/* 주사위 1-6 패턴 */
+.game-container .dice-1 .dice-dot:nth-child(1) { 
+    top: 50% !important; 
+    left: 50% !important; 
+    transform: translate(-50%, -50%) !important; 
+}
+
+.game-container .dice-2 .dice-dot:nth-child(1) { top: 15% !important; left: 15% !important; }
+.game-container .dice-2 .dice-dot:nth-child(2) { bottom: 15% !important; right: 15% !important; }
+
+.game-container .dice-3 .dice-dot:nth-child(1) { top: 15% !important; left: 15% !important; }
+.game-container .dice-3 .dice-dot:nth-child(2) { top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; }
+.game-container .dice-3 .dice-dot:nth-child(3) { bottom: 15% !important; right: 15% !important; }
+
+.game-container .dice-4 .dice-dot:nth-child(1) { top: 15% !important; left: 15% !important; }
+.game-container .dice-4 .dice-dot:nth-child(2) { top: 15% !important; right: 15% !important; }
+.game-container .dice-4 .dice-dot:nth-child(3) { bottom: 15% !important; left: 15% !important; }
+.game-container .dice-4 .dice-dot:nth-child(4) { bottom: 15% !important; right: 15% !important; }
+
+.game-container .dice-5 .dice-dot:nth-child(1) { top: 15% !important; left: 15% !important; }
+.game-container .dice-5 .dice-dot:nth-child(2) { top: 15% !important; right: 15% !important; }
+.game-container .dice-5 .dice-dot:nth-child(3) { top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; }
+.game-container .dice-5 .dice-dot:nth-child(4) { bottom: 15% !important; left: 15% !important; }
+.game-container .dice-5 .dice-dot:nth-child(5) { bottom: 15% !important; right: 15% !important; }
+
+.game-container .dice-6 .dice-dot:nth-child(1) { top: 15% !important; left: 15% !important; }
+.game-container .dice-6 .dice-dot:nth-child(2) { top: 50% !important; left: 15% !important; transform: translateY(-50%) !important; }
+.game-container .dice-6 .dice-dot:nth-child(3) { bottom: 15% !important; left: 15% !important; }
+.game-container .dice-6 .dice-dot:nth-child(4) { top: 15% !important; right: 15% !important; }
+.game-container .dice-6 .dice-dot:nth-child(5) { top: 50% !important; right: 15% !important; transform: translateY(-50%) !important; }
+.game-container .dice-6 .dice-dot:nth-child(6) { bottom: 15% !important; right: 15% !important; }
+
+/* 주사위 애니메이션 */
+.game-container .dice.rolling {
+    animation: diceRoll 1.2s ease-in-out !important;
+}
+
+@keyframes diceRoll {
+    0% { transform: rotateX(0deg) rotateY(0deg) !important; }
+    25% { transform: rotateX(90deg) rotateY(180deg) !important; }
+    50% { transform: rotateX(180deg) rotateY(360deg) !important; }
+    75% { transform: rotateX(270deg) rotateY(540deg) !important; }
+    100% { transform: rotateX(360deg) rotateY(720deg) !important; }
+}
+
+/* 결과 표시 영역 */
+.game-container .result-display {
+    background: #28a745 !important;
+    color: white !important;
+    padding: 16px !important;
+    border-radius: 8px !important;
+    text-align: center !important;
+    margin: 12px 0 !important;
+}
+
+.game-container .result-summary {
+    font-size: 1.3rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    color: white !important;
+}
+
+/* ===================================
+* 베팅 버튼 스타일 (충돌 방지)
+* =================================== */
+
+/* 베팅 버튼 기본 */
+.game-container .bet-button {
+    border: 2px solid #dee2e6 !important;
+    background: #ffffff !important;
+    color: #495057 !important;
+    transition: all 0.2s ease !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    padding: 12px 16px !important;
+    text-align: center !important;
+    display: inline-block !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
+}
+
+/* 대소 버튼 */
+.game-container .bet-button[data-group="high_low"] {
+    border-color: #007bff !important;
+    color: #007bff !important;
+}
+
+.game-container .bet-button[data-group="high_low"]:hover {
+    background: #007bff !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+.game-container .bet-button[data-group="high_low"].active {
+    background: #007bff !important;
+    color: white !important;
+    border-color: #0056b3 !important;
+}
+
+/* 홀짝 버튼 */
+.game-container .bet-button[data-group="odd_even"] {
+    border-color: #28a745 !important;
+    color: #28a745 !important;
+}
+
+.game-container .bet-button[data-group="odd_even"]:hover {
+    background: #28a745 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+.game-container .bet-button[data-group="odd_even"].active {
+    background: #28a745 !important;
+    color: white !important;
+    border-color: #1e7e34 !important;
+}
+
+/* 버튼 비활성화 */
+.game-container .bet-button:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    pointer-events: none !important;
+}
+
+/* ===================================
+* 폼 스타일 (그누보드 독립)
+* =================================== */
+
+/* 라벨 */
+.game-container .form-label {
+    font-weight: 600 !important;
+    color: #495057 !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+    font-size: 0.9rem !important;
+}
+
+/* 입력 그룹 */
+.game-container .input-group {
+    position: relative !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    width: 100% !important;
+}
+
+.game-container .input-group-text {
+    border: 1px solid #ced4da !important;
+    background-color: #f8f9fa !important;
+    border-right: none !important;
+    color: #6c757d !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    border-radius: 0.375rem 0 0 0.375rem !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* 폼 컨트롤 */
+.game-container .form-control {
+    border: 1px solid #ced4da !important;
+    border-left: none !important;
+    padding: 12px !important;
+    font-size: 1rem !important;
+    background-color: #ffffff !important;
+    color: #495057 !important;
+    border-radius: 0 0.375rem 0.375rem 0 !important;
+    line-height: 1.5 !important;
+    flex: 1 1 auto !important;
+    width: 1% !important;
+    min-width: 0 !important;
+}
+
+.game-container .form-control:focus {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    outline: 0 !important;
+    background-color: #ffffff !important;
+}
+
+.game-container .form-control::placeholder {
+    color: #6c757d !important;
+    opacity: 1 !important;
+}
+
+/* ===================================
+* 버튼 스타일 (독립)
+* =================================== */
+
+/* 기본 버튼 */
+.game-container .btn {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    padding: 12px 20px !important;
+    transition: all 0.2s ease !important;
+    font-size: 0.95rem !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    line-height: 1.5 !important;
+}
+
+/* 프라이머리 버튼 */
+.game-container .btn-primary {
+    background: #007bff !important;
+    border-color: #007bff !important;
+    color: white !important;
+}
+
+.game-container .btn-primary:hover {
+    background: #0056b3 !important;
+    border-color: #0056b3 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+}
+
+.game-container .btn-primary:disabled {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+    transform: none !important;
+    opacity: 0.65 !important;
+}
+
+/* 경고 버튼 (게임신청) */
+.game-container .btn-warning {
+    background: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #212529 !important;
+    font-weight: 700 !important;
+}
+
+.game-container .btn-warning:hover {
+    background: #e0a800 !important;
+    border-color: #d39e00 !important;
+    color: #212529 !important;
+    transform: translateY(-1px) !important;
+}
+
+.game-container .btn-warning:disabled {
+    background: #6c757d !important;
+    border-color: #6c757d !important;
+    color: white !important;
+    transform: none !important;
+    opacity: 0.65 !important;
+}
+
+/* 아웃라인 버튼 */
+.game-container .btn-outline-dark {
+    border: 1px solid #495057 !important;
+    color: #495057 !important;
+    background: white !important;
+}
+
+.game-container .btn-outline-dark:hover {
+    background: #495057 !important;
+    border-color: #495057 !important;
+    color: white !important;
+}
+
+/* w-100 클래스 */
+.game-container .w-100 {
+    width: 100% !important;
+}
+
+/* ===================================
+* 정보 표시 스타일
+* =================================== */
+
+/* 현재 선택 */
+#currentSelection {
+    font-weight: 600;
+    color: #007bff;
+    font-size: 1.05rem;
+}
+
+/* 보유머니 */
+#userMoney {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 1.05rem;
+}
+
+/* 합산금액 */
+#totalBetAmount {
+    font-weight: 700;
+    color: #fd7e14;
+    margin: 0;
+}
+
+/* 베팅 내역 */
+#betHistoryArea {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+#betHistoryArea h6 {
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#betHistoryArea .small {
+    color: #6c757d;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* ===================================
+* 애니메이션 효과
+* =================================== */
+
+/* 포인트 변화 애니메이션 */
+.point-change {
+    animation: pointChange 0.6s ease-out;
+}
+
+@keyframes pointChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); color: #007bff; }
+    100% { transform: scale(1); }
+}
+
+/* 페이드인 애니메이션 */
+.fade-in {
+    animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================================
+* 반응형 디자인
+* =================================== */
+
+/* 작은 화면 */
+@media (max-width: 375px) {
+    .game-container {
+        padding: 12px;
+    }
+    
+    .dice {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .dice-container {
+        gap: 10px;
+    }
+    
+    .card-body {
+        padding: 16px;
+    }
+    
+    .timer-display {
+        font-size: 1.6rem;
+    }
+}
+
+/* 매우 작은 화면 */
+@media (max-width: 320px) {
+    .dice {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .dice-dot {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ===================================
+* 토스트 알림 스타일
+* =================================== */
+
+.toast-container {
+    z-index: 1050;
+}
+
+.toast {
+    background: rgba(0, 0, 0, 0.85);
+    border: none;
+    border-radius: 8px;
+}
+
+.toast-body {
+    font-weight: 500;
+    padding: 12px 16px;
+}
+
+/* ===================================
+* 히스토리 페이지 전용 스타일
+* =================================== */
+
+/* 통계 아이템 */
+.game-container .stats-item {
+    text-align: center !important;
+    padding: 12px !important;
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 1px solid #e9ecef !important;
+}
+
+.game-container .stats-number {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+    color: #495057 !important;
+}
+
+.game-container .stats-label {
+    font-size: 0.8rem !important;
+    color: #6c757d !important;
+    font-weight: 500 !important;
+}
+
+/* 히스토리 목록 */
+.game-container .history-list {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* 히스토리 아이템 */
+.game-container .history-item {
+    padding: 16px 0 !important;
+    border-bottom: 1px solid #e9ecef !important;
+    margin-bottom: 0 !important;
+}
+
+.game-container .history-item:last-child {
+    border-bottom: none !important;
+}
+
+/* 히스토리 헤더 */
+.game-container .history-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+}
+
+.game-container .round-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.game-container .round-number {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: #495057 !important;
+    background: #e9ecef !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+}
+
+.game-container .round-date {
+    font-size: 0.8rem !important;
+    color: #6c757d !important;
+}
+
+/* 결과 배지 */
+.game-container .badge {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.game-container .badge-win {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.game-container .badge-lose {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.game-container .badge-pending {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+/* 주사위 결과 행 */
+.game-container .dice-result-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
+    padding: 12px !important;
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+}
+
+.game-container .dice-container-mini {
+    display: flex !important;
+    gap: 6px !important;
+    align-items: center !important;
+}
+
+/* 미니 주사위 */
+.game-container .dice-mini {
+    width: 24px !important;
+    height: 24px !important;
+    background: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+}
+
+.game-container .dice-dot-mini {
+    width: 3px !important;
+    height: 3px !important;
+    background: #495057 !important;
+    border-radius: 50% !important;
+    position: absolute !important;
+}
+
+/* 미니 주사위 점 패턴 */
+.game-container .dice-mini.dice-1 .dice-dot-mini:nth-child(1) { 
+    top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; 
+}
+
+.game-container .dice-mini.dice-2 .dice-dot-mini:nth-child(1) { top: 25% !important; left: 25% !important; }
+.game-container .dice-mini.dice-2 .dice-dot-mini:nth-child(2) { bottom: 25% !important; right: 25% !important; }
+
+.game-container .dice-mini.dice-3 .dice-dot-mini:nth-child(1) { top: 25% !important; left: 25% !important; }
+.game-container .dice-mini.dice-3 .dice-dot-mini:nth-child(2) { top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; }
+.game-container .dice-mini.dice-3 .dice-dot-mini:nth-child(3) { bottom: 25% !important; right: 25% !important; }
+
+.game-container .dice-mini.dice-4 .dice-dot-mini:nth-child(1) { top: 25% !important; left: 25% !important; }
+.game-container .dice-mini.dice-4 .dice-dot-mini:nth-child(2) { top: 25% !important; right: 25% !important; }
+.game-container .dice-mini.dice-4 .dice-dot-mini:nth-child(3) { bottom: 25% !important; left: 25% !important; }
+.game-container .dice-mini.dice-4 .dice-dot-mini:nth-child(4) { bottom: 25% !important; right: 25% !important; }
+
+.game-container .dice-mini.dice-5 .dice-dot-mini:nth-child(1) { top: 25% !important; left: 25% !important; }
+.game-container .dice-mini.dice-5 .dice-dot-mini:nth-child(2) { top: 25% !important; right: 25% !important; }
+.game-container .dice-mini.dice-5 .dice-dot-mini:nth-child(3) { top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; }
+.game-container .dice-mini.dice-5 .dice-dot-mini:nth-child(4) { bottom: 25% !important; left: 25% !important; }
+.game-container .dice-mini.dice-5 .dice-dot-mini:nth-child(5) { bottom: 25% !important; right: 25% !important; }
+
+.game-container .dice-mini.dice-6 .dice-dot-mini:nth-child(1) { top: 20% !important; left: 25% !important; }
+.game-container .dice-mini.dice-6 .dice-dot-mini:nth-child(2) { top: 50% !important; left: 25% !important; transform: translateY(-50%) !important; }
+.game-container .dice-mini.dice-6 .dice-dot-mini:nth-child(3) { bottom: 20% !important; left: 25% !important; }
+.game-container .dice-mini.dice-6 .dice-dot-mini:nth-child(4) { top: 20% !important; right: 25% !important; }
+.game-container .dice-mini.dice-6 .dice-dot-mini:nth-child(5) { top: 50% !important; right: 25% !important; transform: translateY(-50%) !important; }
+.game-container .dice-mini.dice-6 .dice-dot-mini:nth-child(6) { bottom: 20% !important; right: 25% !important; }
+
+.game-container .result-text {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    color: #495057 !important;
+}
+
+/* 베팅 정보 행 */
+.game-container .bet-info-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.game-container .bet-details {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex: 1 !important;
+}
+
+.game-container .bet-type {
+    font-size: 0.85rem !important;
+    color: #495057 !important;
+}
+
+.game-container .bet-amount {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: #007bff !important;
+}
+
+.game-container .win-amount {
+    font-size: 0.85rem !important;
+    color: #28a745 !important;
+}
+
+/* 빈 상태 */
+.game-container .empty-state {
+    text-align: center !important;
+    padding: 40px 20px !important;
+    color: #6c757d !important;
+}
+
+.game-container .empty-icon {
+    font-size: 3rem !important;
+    color: #dee2e6 !important;
+    margin-bottom: 16px !important;
+}
+
+.game-container .empty-title {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: #495057 !important;
+    margin-bottom: 8px !important;
+}
+
+.game-container .empty-text {
+    font-size: 0.9rem !important;
+    color: #6c757d !important;
+    margin-bottom: 20px !important;
+}
+
+/* 페이지네이션 */
+.game-container .pagination {
+    margin: 0 !important;
+}
+
+.game-container .page-link {
+    color: #495057 !important;
+    border: 1px solid #dee2e6 !important;
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+}
+
+.game-container .page-link:hover {
+    color: #007bff !important;
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+}
+
+.game-container .page-item.active .page-link {
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+    color: white !important;
+}
+
+/* 반응형 */
+@media (max-width: 375px) {
+    .game-container .history-header {
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+    
+    .game-container .bet-info-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .game-container .dice-result-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+}
+
+/* ===================================
+* 기존 스타일 계속...
+* =================================== */
+/* ===================================
+* 유틸리티 클래스
+* =================================== */
+
+.text-primary-custom {
+    color: #007bff !important;
+}
+
+.text-success-custom {
+    color: #28a745 !important;
+}
+
+.text-warning-custom {
+    color: #fd7e14 !important;
+}
+
+.bg-light-custom {
+    background-color: #f8f9fa !important;
+}
+
+.border-custom {
+    border: 1px solid #dee2e6 !important;
+}
+
+
+/* ===================================
+* 모바일 하단 퀵 메뉴 추가 CSS
+* =================================== */
+
+/* 퀵 메뉴 컨테이너 */
+.mobile-quick-menu {
+	width:100%;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(229, 231, 235, 0.8) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important;
+    z-index: 1000 !important;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom)) !important;
+}
+
+/* 퀵 메뉴 리스트 */
+.quick-menu-list {
+    display: flex !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+    max-width: 500px !important;
+    margin: 0 auto !important;
+}
+
+/* 퀵 메뉴 아이템 */
+.quick-menu-item {
+    flex: 1 !important;
+    text-align: center !important;
+}
+
+/* 퀵 메뉴 링크 */
+.quick-menu-link {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 4px !important;
+    text-decoration: none !important;
+    color: #6b7280 !important;
+    transition: all 0.2s ease !important;
+    border-radius: 8px !important;
+    min-height: 56px !important;
+}
+
+.quick-menu-link:hover,
+.quick-menu-link.active {
+    color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* 퀵 메뉴 아이콘 */
+.quick-menu-icon {
+    font-size: 20px !important;
+    margin-bottom: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.quick-menu-link:hover .quick-menu-icon,
+.quick-menu-link.active .quick-menu-icon {
+    transform: scale(1.1) !important;
+    color: #3b82f6 !important;
+}
+
+/* 로고 아이콘 특별 처리 */
+.quick-menu-logo {
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: contain !important;
+    margin-bottom: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.quick-menu-link:hover .quick-menu-logo,
+.quick-menu-link.active .quick-menu-logo {
+    transform: scale(1.1) !important;
+}
+
+/* 퀵 메뉴 텍스트 */
+.quick-menu-text {
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    transition: all 0.2s ease !important;
+}
+
+.quick-menu-link:hover .quick-menu-text,
+.quick-menu-link.active .quick-menu-text {
+    color: #3b82f6 !important;
+    font-weight: 600 !important;
+}
+
+/* 메인 컨테이너 하단 여백 추가 */
+body.game-body {
+    padding-bottom: 80px !important; /* 퀵 메뉴 공간 확보 */
+}
+
+.game-container {
+    margin-bottom: 20px !important; /* 추가 여백 */
+}
+
+/* PC에서도 420px 기준으로 중앙 정렬 */
+.mobile-quick-menu {
+    max-width: 420px !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    right: auto !important;
+}
+
+/* 아이폰 노치 대응 */
+@supports (padding: max(0px)) {
+    .mobile-quick-menu {
+        padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* 작은 화면 최적화 */
+@media (max-width: 360px) {
+    .quick-menu-icon {
+        font-size: 18px !important;
+    }
+    
+    .quick-menu-text {
+        font-size: 9px !important;
+    }
+    
+    .quick-menu-link {
+        min-height: 50px !important;
+        padding: 6px 2px !important;
+    }
+}
+
+/* 퀵 메뉴 애니메이션 */
+.mobile-quick-menu {
+    animation: quickMenuSlideUp 0.3s ease-out !important;
+}
+
+@keyframes quickMenuSlideUp {
+    from {
+        transform: translateY(100%) !important;
+        opacity: 0 !important;
+    }
+    to {
+        transform: translateY(0) !important;
+        opacity: 1 !important;
+    }
+}
+
+/* 활성 상태 펄스 효과 */
+.quick-menu-link.active .quick-menu-icon {
+    animation: iconPulse 2s ease-in-out infinite !important;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1.1) !important;
+    }
+    50% {
+        transform: scale(1.2) !important;
+    }
+}

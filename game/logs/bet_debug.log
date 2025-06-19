@@ -1,0 +1,136 @@
+[2025-06-12 21:07:32] === 베팅 처리 시작 ===
+[2025-06-12 21:07:32] 로그인 확인: admin / 최고관리자
+[2025-06-12 21:07:32] POST 데이터: round_id=34, round_number=34, high_low=low, odd_even=odd, bet_amount=5555
+[2025-06-12 21:07:32] 게임 설정 로드 시작
+[2025-06-12 21:07:32] 게임 설정 로드 완료: {"betting_time":"90","game_interval":"120","game_status":"1","max_bet":"100000","min_bet":"1000","result_time":"30","win_rate_high_low":"1.95","win_rate_odd_even":"1.95"}
+[2025-06-12 21:07:32] 회차 검증 시작
+[2025-06-12 21:07:32] 회차 정보 확인: {"round_id":"34","round_number":"34","start_time":"2025-06-12 21:07:28","end_time":"2025-06-12 21:08:58","result_time":"2025-06-12 21:09:28","dice1":null,"dice2":null,"dice3":null,"total":null,"is_high":null,"is_odd":null,"status":"betting","total_bet_amount":"0","total_players":"0","created_at":"2025-06-12 21:07:28"}
+[2025-06-12 21:07:32] 베팅 금액 검증: min=1000, max=100000, bet=5555
+[2025-06-12 21:07:32] 포인트 확인 시작
+[2025-06-12 21:07:32] 현재 포인트: 10000601
+[2025-06-12 21:07:32] 베팅 처리 시작
+[2025-06-12 21:07:32] 베팅 전 포인트: 10000601
+[2025-06-12 21:07:32] 포인트 차감 시도: amount=5555, content='주사위게임 베팅 (34회차)'
+[2025-06-12 21:07:32] insert_point 파라미터: mb_id='admin', point=-5555, content='주사위게임 베팅 (34회차)'
+[2025-06-12 21:07:32] insert_point 결과: false
+[2025-06-12 21:07:32] 포인트 차감 함수 호출 실패
+[2025-06-12 21:07:32] 수동 포인트 차감 시도
+[2025-06-12 21:07:32] 수동 포인트 차감 결과: failed
+[2025-06-12 21:07:34] === 베팅 처리 시작 ===
+[2025-06-12 21:07:34] 로그인 확인: admin / 최고관리자
+[2025-06-12 21:07:34] POST 데이터: round_id=34, round_number=34, high_low=low, odd_even=even, bet_amount=5555
+[2025-06-12 21:07:34] 게임 설정 로드 시작
+[2025-06-12 21:07:34] 게임 설정 로드 완료: {"betting_time":"90","game_interval":"120","game_status":"1","max_bet":"100000","min_bet":"1000","result_time":"30","win_rate_high_low":"1.95","win_rate_odd_even":"1.95"}
+[2025-06-12 21:07:34] 회차 검증 시작
+[2025-06-12 21:07:34] 회차 정보 확인: {"round_id":"34","round_number":"34","start_time":"2025-06-12 21:07:28","end_time":"2025-06-12 21:08:58","result_time":"2025-06-12 21:09:28","dice1":null,"dice2":null,"dice3":null,"total":null,"is_high":null,"is_odd":null,"status":"betting","total_bet_amount":"0","total_players":"0","created_at":"2025-06-12 21:07:28"}
+[2025-06-12 21:07:34] 베팅 금액 검증: min=1000, max=100000, bet=5555
+[2025-06-12 21:07:34] 포인트 확인 시작
+[2025-06-12 21:07:34] 현재 포인트: 10000601
+[2025-06-12 21:07:34] 베팅 처리 시작
+[2025-06-12 21:07:34] 베팅 전 포인트: 10000601
+[2025-06-12 21:07:34] 포인트 차감 시도: amount=5555, content='주사위게임 베팅 (34회차)'
+[2025-06-12 21:07:34] insert_point 파라미터: mb_id='admin', point=-5555, content='주사위게임 베팅 (34회차)'
+[2025-06-12 21:07:34] insert_point 결과: false
+[2025-06-12 21:07:34] 포인트 차감 함수 호출 실패
+[2025-06-12 21:07:34] 수동 포인트 차감 시도
+[2025-06-12 21:07:34] 수동 포인트 차감 결과: failed
+[2025-06-12 21:09:31] === 베팅 처리 시작 ===
+[2025-06-12 21:09:31] 로그인 확인: admin / 최고관리자
+[2025-06-12 21:09:31] POST 데이터: round_id=35, round_number=35, high_low=low, odd_even=odd, bet_amount=5552
+[2025-06-12 21:09:31] 게임 설정 로드 시작
+[2025-06-12 21:09:31] 게임 설정 로드 완료: {"betting_time":"90","game_interval":"120","game_status":"1","max_bet":"100000","min_bet":"1000","result_time":"30","win_rate_high_low":"1.95","win_rate_odd_even":"1.95"}
+[2025-06-12 21:09:31] 회차 검증 시작
+[2025-06-12 21:09:31] 회차 정보 확인: {"round_id":"35","round_number":"35","start_time":"2025-06-12 21:09:28","end_time":"2025-06-12 21:10:58","result_time":"2025-06-12 21:11:28","dice1":null,"dice2":null,"dice3":null,"total":null,"is_high":null,"is_odd":null,"status":"betting","total_bet_amount":"0","total_players":"0","created_at":"2025-06-12 21:09:28"}
+[2025-06-12 21:09:31] 베팅 금액 검증: min=1000, max=100000, bet=5552
+[2025-06-12 21:09:31] 포인트 확인 시작
+[2025-06-12 21:09:31] 현재 포인트: 10000601
+[2025-06-12 21:09:31] 베팅 처리 시작
+[2025-06-12 21:09:31] 베팅 전 포인트: 10000601
+[2025-06-12 21:09:31] 포인트 차감 시도: amount=5552, content='주사위게임 베팅 (35회차)'
+[2025-06-12 21:09:31] insert_point 파라미터: mb_id='admin', point=-5552, content='주사위게임 베팅 (35회차)', rel_table='dice_game_bets', rel_id=0, rel_action='베팅'
+[2025-06-12 21:09:31] insert_point 결과: false
+[2025-06-12 21:09:31] 포인트 차감 함수 호출 실패
+[2025-06-12 21:09:31] 수동 포인트 차감 시도
+[2025-06-12 21:09:31] 현재 누적: 10000601, 새 누적: 9995049
+[2025-06-12 21:09:31] 수동 포인트 SQL: 
+            INSERT INTO g5_point 
+            (mb_id, po_datetime, po_content, po_point, po_use_point, po_expired, po_expire_date, po_sum)
+            VALUES 
+            ('admin', NOW(), '주사위게임 베팅 (35회차)', -5552, 0, 0, '9999-12-31', 9995049)
+        
+[2025-06-12 21:09:31] 수동 포인트 차감 결과: failed
+[2025-06-12 21:09:44] === 베팅 처리 시작 ===
+[2025-06-12 21:09:44] 로그인 확인: admin / 최고관리자
+[2025-06-12 21:09:44] POST 데이터: round_id=35, round_number=35, high_low=low, odd_even=odd, bet_amount=5552
+[2025-06-12 21:09:44] 게임 설정 로드 시작
+[2025-06-12 21:09:44] 게임 설정 로드 완료: {"betting_time":"90","game_interval":"120","game_status":"1","max_bet":"100000","min_bet":"1000","result_time":"30","win_rate_high_low":"1.95","win_rate_odd_even":"1.95"}
+[2025-06-12 21:09:44] 회차 검증 시작
+[2025-06-12 21:09:44] 회차 정보 확인: {"round_id":"35","round_number":"35","start_time":"2025-06-12 21:09:28","end_time":"2025-06-12 21:10:58","result_time":"2025-06-12 21:11:28","dice1":null,"dice2":null,"dice3":null,"total":null,"is_high":null,"is_odd":null,"status":"betting","total_bet_amount":"0","total_players":"0","created_at":"2025-06-12 21:09:28"}
+[2025-06-12 21:09:44] 베팅 금액 검증: min=1000, max=100000, bet=5552
+[2025-06-12 21:09:44] 포인트 확인 시작
+[2025-06-12 21:09:44] 현재 포인트: 10000601
+[2025-06-12 21:09:44] 베팅 처리 시작
+[2025-06-12 21:09:44] 베팅 전 포인트: 10000601
+[2025-06-12 21:09:44] 포인트 차감 시도: amount=5552, content='주사위게임 베팅 (35회차)'
+[2025-06-12 21:09:44] insert_point 파라미터: mb_id='admin', point=-5552, content='주사위게임 베팅 (35회차)', rel_table='dice_game_bets', rel_id=0, rel_action='베팅'
+[2025-06-12 21:09:44] insert_point 결과: false
+[2025-06-12 21:09:44] 포인트 차감 함수 호출 실패
+[2025-06-12 21:09:44] 수동 포인트 차감 시도
+[2025-06-12 21:09:44] 현재 누적: 10000601, 새 누적: 9995049
+[2025-06-12 21:09:44] 수동 포인트 SQL: 
+            INSERT INTO g5_point 
+            (mb_id, po_datetime, po_content, po_point, po_use_point, po_expired, po_expire_date, po_sum)
+            VALUES 
+            ('admin', NOW(), '주사위게임 베팅 (35회차)', -5552, 0, 0, '9999-12-31', 9995049)
+        
+[2025-06-12 21:09:44] 수동 포인트 차감 결과: failed
+[2025-06-12 21:09:53] === 베팅 처리 시작 ===
+[2025-06-12 21:09:53] 로그인 확인: admin / 최고관리자
+[2025-06-12 21:09:53] POST 데이터: round_id=35, round_number=35, high_low=low, odd_even=odd, bet_amount=5552
+[2025-06-12 21:09:53] 게임 설정 로드 시작
+[2025-06-12 21:09:53] 게임 설정 로드 완료: {"betting_time":"90","game_interval":"120","game_status":"1","max_bet":"100000","min_bet":"1000","result_time":"30","win_rate_high_low":"1.95","win_rate_odd_even":"1.95"}
+[2025-06-12 21:09:53] 회차 검증 시작
+[2025-06-12 21:09:53] 회차 정보 확인: {"round_id":"35","round_number":"35","start_time":"2025-06-12 21:09:28","end_time":"2025-06-12 21:10:58","result_time":"2025-06-12 21:11:28","dice1":null,"dice2":null,"dice3":null,"total":null,"is_high":null,"is_odd":null,"status":"betting","total_bet_amount":"0","total_players":"0","created_at":"2025-06-12 21:09:28"}
+[2025-06-12 21:09:53] 베팅 금액 검증: min=1000, max=100000, bet=5552
+[2025-06-12 21:09:53] 포인트 확인 시작
+[2025-06-12 21:09:53] 현재 포인트: 10000601
+[2025-06-12 21:09:53] 베팅 처리 시작
+[2025-06-12 21:09:53] 베팅 전 포인트: 10000601
+[2025-06-12 21:09:53] 포인트 차감 시도: amount=5552, content='주사위게임 베팅 (35회차)'
+[2025-06-12 21:09:53] insert_point 파라미터: mb_id='admin', point=-5552, content='주사위게임 베팅 (35회차)', rel_table='dice_game_bets', rel_id=0, rel_action='베팅'
+[2025-06-12 21:09:53] insert_point 결과: false
+[2025-06-12 21:09:53] 포인트 차감 함수 호출 실패
+[2025-06-12 21:09:53] 수동 포인트 차감 시도
+[2025-06-12 21:09:53] 현재 누적: 10000601, 새 누적: 9995049
+[2025-06-12 21:09:53] 수동 포인트 SQL: 
+            INSERT INTO g5_point 
+            (mb_id, po_datetime, po_content, po_point, po_use_point, po_expired, po_expire_date, po_sum)
+            VALUES 
+            ('admin', NOW(), '주사위게임 베팅 (35회차)', -5552, 0, 0, '9999-12-31', 9995049)
+        
+[2025-06-12 21:09:53] 수동 포인트 차감 결과: failed
+[2025-06-12 21:10:26] === 베팅 처리 시작 ===
+[2025-06-12 21:10:26] 로그인 확인: admin / 최고관리자
+[2025-06-12 21:10:26] POST 데이터: round_id=35, round_number=35, high_low=low, odd_even=odd, bet_amount=5552
+[2025-06-12 21:10:26] 게임 설정 로드 시작
+[2025-06-12 21:10:26] 게임 설정 로드 완료: {"betting_time":"90","game_interval":"120","game_status":"1","max_bet":"100000","min_bet":"1000","result_time":"30","win_rate_high_low":"1.95","win_rate_odd_even":"1.95"}
+[2025-06-12 21:10:26] 회차 검증 시작
+[2025-06-12 21:10:26] 회차 정보 확인: {"round_id":"35","round_number":"35","start_time":"2025-06-12 21:09:28","end_time":"2025-06-12 21:10:58","result_time":"2025-06-12 21:11:28","dice1":null,"dice2":null,"dice3":null,"total":null,"is_high":null,"is_odd":null,"status":"betting","total_bet_amount":"0","total_players":"0","created_at":"2025-06-12 21:09:28"}
+[2025-06-12 21:10:26] 베팅 금액 검증: min=1000, max=100000, bet=5552
+[2025-06-12 21:10:26] 포인트 확인 시작
+[2025-06-12 21:10:26] 현재 포인트: 10000601
+[2025-06-12 21:10:26] 베팅 처리 시작
+[2025-06-12 21:10:26] 베팅 전 포인트: 10000601
+[2025-06-12 21:10:26] 포인트 차감 시도: amount=5552, content='주사위게임 베팅 (35회차)'
+[2025-06-12 21:10:26] insert_point 파라미터: mb_id='admin', point=-5552, content='주사위게임 베팅 (35회차)', rel_table='dice_game_bets', rel_id=0, rel_action='베팅'
+[2025-06-12 21:10:26] insert_point 결과: false
+[2025-06-12 21:10:26] 포인트 차감 함수 호출 실패
+[2025-06-12 21:10:26] 수동 포인트 차감 시도
+[2025-06-12 21:10:26] 현재 누적: 10000601, 새 누적: 9995049
+[2025-06-12 21:10:26] 수동 포인트 SQL: 
+            INSERT INTO g5_point 
+            (mb_id, po_datetime, po_content, po_point, po_use_point, po_expired, po_expire_date, po_sum)
+            VALUES 
+            ('admin', NOW(), '주사위게임 베팅 (35회차)', -5552, 0, 0, '9999-12-31', 9995049)
+        
+[2025-06-12 21:10:26] 수동 포인트 차감 결과: failed

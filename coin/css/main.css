@@ -1,0 +1,255 @@
+/*
+ * 파일명: main.css
+ * 위치: /css/main.css
+ * 기능: 블록체인 지갑 분석기 스타일시트
+ * 작성일: 2024-12-27
+ */
+
+/* ===================================
+ * 전역 스타일
+ * =================================== */
+
+/* 기본 설정 */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+/* ===================================
+ * 컴포넌트 스타일
+ * =================================== */
+
+/* 네트워크 선택 카드 */
+.network-option {
+    cursor: pointer;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.network-option:hover {
+    border-color: var(--primary-color);
+    background-color: #f0f8ff;
+}
+
+.network-option input[type="radio"]:checked + label {
+    color: var(--primary-color);
+}
+
+.network-option input[type="radio"]:checked ~ * {
+    border-color: var(--primary-color);
+}
+
+/* 입력 그룹 스타일 */
+.input-group-text {
+    border-right: none;
+    background-color: #fff;
+}
+
+.form-control {
+    border-left: none;
+    padding-left: 0;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: var(--primary-color);
+}
+
+/* ===================================
+ * 카드 스타일
+ * =================================== */
+
+/* 카드 호버 효과 */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ===================================
+ * 테이블 스타일
+ * =================================== */
+
+/* 토큰 잔액 테이블 */
+.token-table {
+    font-size: 0.9rem;
+}
+
+.token-table th {
+    background-color: var(--light-color);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.token-table td {
+    vertical-align: middle;
+}
+
+.token-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+/* 트랜잭션 테이블 */
+.transaction-table {
+    font-size: 0.85rem;
+}
+
+.tx-hash {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.tx-in {
+    color: var(--success-color);
+}
+
+.tx-out {
+    color: var(--danger-color);
+}
+
+/* ===================================
+ * 버튼 스타일
+ * =================================== */
+
+/* 주요 버튼 애니메이션 */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ===================================
+ * 알림 스타일
+ * =================================== */
+
+/* 성공 알림 */
+.alert-success {
+    border-left: 4px solid var(--success-color);
+}
+
+/* 에러 알림 */
+.alert-danger {
+    border-left: 4px solid var(--danger-color);
+}
+
+/* ===================================
+ * 애니메이션
+ * =================================== */
+
+/* 페이드 인 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 로딩 스피너 배경 */
+.loading-spinner::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+}
+
+/* ===================================
+ * 반응형 디자인
+ * =================================== */
+
+/* 모바일 디바이스 */
+@media (max-width: 768px) {
+    .main-container {
+        padding: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+    
+    .tx-hash {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* ===================================
+ * 유틸리티 클래스
+ * =================================== */
+
+/* 텍스트 잘림 처리 */
+.text-truncate-address {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+/* 배지 스타일 */
+.badge-network {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* 스크롤바 스타일 */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

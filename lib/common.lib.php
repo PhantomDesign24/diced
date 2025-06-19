@@ -179,19 +179,12 @@ function get_cookie($cookie_name)
 }
 
 
-// 경고메세지를 경고창으로
+// 경고메세지를 SweetAlert2 경고창으로
 function alert($msg='', $url='', $error=true, $post=false)
 {
     global $g5, $config, $member, $is_member, $is_admin, $board;
-
     run_event('alert', $msg, $url, $error, $post);
-
-    if (function_exists('safe_filter_url_host')) {
-        $url = safe_filter_url_host($url);
-    }
-
     $msg = $msg ? strip_tags($msg, '<br>') : '올바른 방법으로 이용해 주십시오.';
-
     $header = '';
     if (isset($g5['title'])) {
         $header = $g5['title'];
