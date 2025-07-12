@@ -27,14 +27,20 @@ $result_time = (int)getGameConfig('result_time', '30');
 $game_interval = $betting_time + $result_time;
 
 // 실시간 설정 표시용 정보
+// 실시간 설정 표시용 정보 부분을 찾아서 수정
 $settings_info = [
     'betting_time' => $betting_time,
     'result_time' => $result_time,
     'game_interval' => $game_interval,
     'min_bet' => getGameConfig('min_bet', '1000'),
     'max_bet' => getGameConfig('max_bet', '100000'),
-    'win_rate_high_low' => getGameConfig('win_rate_high_low', '1.95'),
-    'win_rate_odd_even' => getGameConfig('win_rate_odd_even', '1.95')
+    // A/B/C 게임 배율
+    'game_a1_rate' => getGameConfig('game_a1_rate', '2.0'),
+    'game_a2_rate' => getGameConfig('game_a2_rate', '2.0'),
+    'game_b1_rate' => getGameConfig('game_b1_rate', '2.0'),
+    'game_b2_rate' => getGameConfig('game_b2_rate', '2.0'),
+    'game_c1_rate' => getGameConfig('game_c1_rate', '2.0'),
+    'game_c2_rate' => getGameConfig('game_c2_rate', '2.0')
 ];
 $is_popup = isset($_GET['popup']) || (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'admin.php') !== false);
 
@@ -59,11 +65,16 @@ if ($action === 'generate_rounds') {
     $count = (int)($_POST['count'] ?? 50);
     $pattern = $_POST['pattern'] ?? 'random';
     
-    // 시작 회차 번호 계산 - 모든 회차 중 최대값 찾기
+    // 커스텀 패턴 비율 (새로 추가)
+    $custom_a1_ratio = (int)($_POST['custom_a1_ratio'] ?? 50);
+    $custom_b1_ratio = (int)($_POST['custom_b1_ratio'] ?? 50);
+    $custom_c1_ratio = (int)($_POST['custom_c1_ratio'] ?? 50);
+    
+    // 시작 회차 번호 계산
     $max_round = sql_fetch("SELECT MAX(round_number) as max_round FROM dice_game_rounds");
     $start_round = ($max_round && $max_round['max_round']) ? $max_round['max_round'] + 1 : 1;
     
-    // 시작 시간 계산 부분을 다음과 같이 수정
+    // 시작 시간 계산
     $last_round_time = sql_fetch("
         SELECT result_time 
         FROM dice_game_rounds 
@@ -72,130 +83,102 @@ if ($action === 'generate_rounds') {
         LIMIT 1
     ");
     
-    // 시작 시간 계산 부분 수정
     if ($last_round_time) {
-        // 마지막 회차 결과 시간 + 게임 간격 후부터 시작
         $base_time = strtotime($last_round_time['result_time']) + $game_interval;
-        
-        // 중요: 현재 시간보다 과거면 현재 시간 + 5분으로 설정
         $now = time();
         if ($base_time <= $now) {
             $base_time = $now + 300; // 5분 후부터 시작
         }
     } else {
-        // 회차가 하나도 없으면 5분 후부터 시작
         $base_time = time() + 300;
     }
+    
+    for ($i = 0; $i < $count; $i++) {
+        $round_number = $start_round + $i;
+        
+        // 시간 계산
+        $round_start = $base_time + ($i * $game_interval);
+        $round_end = $round_start + $betting_time;
+        $round_result = $round_end + $result_time;
+        
+        $start_time_str = date('Y-m-d H:i:s', $round_start);
+        $end_time_str = date('Y-m-d H:i:s', $round_end);
+        $result_time_str = date('Y-m-d H:i:s', $round_result);
+        
+        // A/B/C 게임 결과 생성 (주사위 대신)
+        if ($pattern === 'balanced') {
+            // 균형잡힌 패턴
+            $game_a_result = (($i % 2) == 0) ? '1' : '2';
+            $game_b_result = (($i % 3) == 0) ? '1' : '2';
+            $game_c_result = (($i % 4) == 0) ? '1' : '2';
+        } elseif ($pattern === 'custom') {
+            // 커스텀 패턴
+            $game_a_result = (rand(1, 100) <= $custom_a1_ratio) ? '1' : '2';
+            $game_b_result = (rand(1, 100) <= $custom_b1_ratio) ? '1' : '2';
+            $game_c_result = (rand(1, 100) <= $custom_c1_ratio) ? '1' : '2';
+        } else {
+            // 랜덤 패턴
+            $game_a_result = (string)rand(1, 2);
+            $game_b_result = (string)rand(1, 2);
+            $game_c_result = (string)rand(1, 2);
+        }
+        
+        // 현재 시간보다 이전이면 completed, 이후면 scheduled
+        $status = ($round_start <= time()) ? 'completed' : 'scheduled';
+        
+        // dice 컬럼들 제거하고 game 결과 컬럼 추가
+        $insert_sql = "
+            INSERT INTO dice_game_rounds 
+            (round_number, start_time, end_time, result_time, 
+             game_a_result, game_b_result, game_c_result, status, created_at)
+            VALUES 
+            ({$round_number}, '{$start_time_str}', '{$end_time_str}', '{$result_time_str}', 
+             '{$game_a_result}', '{$game_b_result}', '{$game_c_result}', '{$status}', NOW())
+        ";
+        
+        sql_query($insert_sql);
+    }
+    
+    $message = "{$count}개의 회차가 생성되었습니다. (시작 회차: {$start_round})";
+    $message_type = 'success';
+	} elseif ($action === 'update_round_result') {
+    $round_id = (int)($_POST['round_id'] ?? 0);
+    $game_a_result = $_POST['game_a_result'] ?? '';
+    $game_b_result = $_POST['game_b_result'] ?? '';
+    $game_c_result = $_POST['game_c_result'] ?? '';
+    
+    if ($round_id > 0 && in_array($game_a_result, ['1', '2']) && 
+        in_array($game_b_result, ['1', '2']) && 
+        in_array($game_c_result, ['1', '2'])) {
+        
+        $escaped_a = sql_real_escape_string($game_a_result);
+        $escaped_b = sql_real_escape_string($game_b_result);
+        $escaped_c = sql_real_escape_string($game_c_result);
+        
+        // 회차 정보 조회
+        $round_info = sql_fetch("SELECT * FROM dice_game_rounds WHERE round_id = {$round_id}");
+        
+        if ($round_info) {
+            // 상태에 관계없이 결과 업데이트
+            $sql = "UPDATE dice_game_rounds SET 
+                        game_a_result = '{$escaped_a}', 
+                        game_b_result = '{$escaped_b}', 
+                        game_c_result = '{$escaped_c}',
+                        updated_at = NOW()
+                    WHERE round_id = {$round_id}";
             
-            for ($i = 0; $i < $count; $i++) {
-                $round_number = $start_round + $i;
-                
-                // 시간 계산
-                $round_start = $base_time + ($i * $game_interval);
-                $round_end = $round_start + $betting_time;
-                $round_result = $round_end + $result_time;
-                
-                $start_time_str = date('Y-m-d H:i:s', $round_start);
-                $end_time_str = date('Y-m-d H:i:s', $round_end);
-                $result_time_str = date('Y-m-d H:i:s', $round_result);
-                
-                // 결과값 생성
-                if ($pattern === 'balanced') {
-                    // 균형잡힌 패턴
-                    $is_high = ($i % 2 == 0) ? 1 : 0;
-                    $is_odd = (($i + 1) % 2 == 0) ? 1 : 0;
-                    
-                    if ($is_high && $is_odd) {
-                        $combinations = [[5,3,3], [5,5,1], [6,3,2], [4,5,2]];
-                    } elseif ($is_high && !$is_odd) {
-                        $combinations = [[6,6,2], [5,5,2], [6,4,2], [5,3,4]];
-                    } elseif (!$is_high && $is_odd) {
-                        $combinations = [[3,3,3], [2,2,5], [1,4,4], [3,2,4]];
-                    } else {
-                        $combinations = [[2,2,2], [3,3,2], [1,1,4], [2,4,2]];
-                    }
-                    
-                    $selected = $combinations[array_rand($combinations)];
-                    $dice1 = $selected[0];
-                    $dice2 = $selected[1];
-                    $dice3 = $selected[2];
-                    
-                } elseif ($pattern === 'house_favor') {
-                    // 하우스 유리 (70% 하우스 승리)
-                    $house_win = ($i % 10 < 7);
-                    
-                    if ($house_win) {
-                        $combinations = [
-                            [1,1,1], [1,1,2], [1,2,2], [2,2,2],
-                            [6,6,6], [6,6,5], [6,5,5], [5,5,5]
-                        ];
-                    } else {
-                        $combinations = [
-                            [4,4,4], [3,4,5], [4,3,4], [3,5,4],
-                            [6,3,3], [5,4,3], [4,5,3], [3,6,3]
-                        ];
-                    }
-                    
-                    $selected = $combinations[array_rand($combinations)];
-                    $dice1 = $selected[0];
-                    $dice2 = $selected[1];
-                    $dice3 = $selected[2];
-                    
-                } else {
-                    // 완전 랜덤
-                    $dice1 = rand(1, 6);
-                    $dice2 = rand(1, 6);
-                    $dice3 = rand(1, 6);
-                }
-                
-                $total = $dice1 + $dice2 + $dice3;
-                $is_high = $total >= 11 ? 1 : 0;
-                $is_odd = $total % 2 ? 1 : 0;
-                
-                // 현재 시간보다 이전이면 completed, 이후면 scheduled
-                $status = ($round_start <= time()) ? 'completed' : 'scheduled';
-                
-                $insert_sql = "
-                    INSERT INTO dice_game_rounds 
-                    (round_number, start_time, end_time, result_time, dice1, dice2, dice3, total, is_high, is_odd, status, created_at)
-                    VALUES 
-                    ({$round_number}, '{$start_time_str}', '{$end_time_str}', '{$result_time_str}', 
-                     {$dice1}, {$dice2}, {$dice3}, {$total}, {$is_high}, {$is_odd}, '{$status}', NOW())
-                ";
-                
-                sql_query($insert_sql);
+            if (sql_query($sql)) {
+                $message = "회차 #{$round_info['round_number']}의 결과가 수정되었습니다. (A{$game_a_result}, B{$game_b_result}, C{$game_c_result})";
+                $message_type = 'success';
+            } else {
+                $message = "결과 수정 중 오류가 발생했습니다: " . sql_error();
+                $message_type = 'error';
             }
-            
-            $message = "{$count}개의 회차가 생성되었습니다. (시작 회차: {$start_round})";
-            $message_type = 'success';
-            
-        } elseif ($action === 'update_round_result') {
-            $round_id = (int)($_POST['round_id'] ?? 0);
-            $dice1 = (int)($_POST['dice1'] ?? 1);
-            $dice2 = (int)($_POST['dice2'] ?? 1);
-            $dice3 = (int)($_POST['dice3'] ?? 1);
-            
-            if ($round_id > 0) {
-                $total = $dice1 + $dice2 + $dice3;
-                $is_high = $total >= 11 ? 1 : 0;
-                $is_odd = $total % 2 ? 1 : 0;
-                
-                $update_sql = "
-                    UPDATE dice_game_rounds 
-                    SET dice1 = {$dice1}, dice2 = {$dice2}, dice3 = {$dice3}, 
-                        total = {$total}, is_high = {$is_high}, is_odd = {$is_odd}
-                    WHERE round_id = {$round_id}
-                ";
-                
-                if (sql_query($update_sql)) {
-                    $message = "회차 결과가 수정되었습니다.";
-                    $message_type = 'success';
-                } else {
-                    $message = "수정 실패: " . sql_error();
-                    $message_type = 'error';
-                }
-            }
-            
+        }
+    } else {
+        $message = "잘못된 입력값입니다.";
+        $message_type = 'error';
+    }
 } elseif ($action === 'delete_future_rounds') {
     $confirm = $_POST['confirm'] ?? '';
     if ($confirm === 'yes') {
@@ -286,11 +269,22 @@ $stats = [
     'current_round_number' => $current_round ? $current_round['round_number'] : 0
 ];
 
+// A/B/C 게임 통계로 변경
 if (!empty($future_rounds)) {
-    $high_count = array_sum(array_column($future_rounds, 'is_high'));
-    $odd_count = array_sum(array_column($future_rounds, 'is_odd'));
-    $stats['future_high_percentage'] = round(($high_count / count($future_rounds)) * 100, 1);
-    $stats['future_odd_percentage'] = round(($odd_count / count($future_rounds)) * 100, 1);
+    $a1_count = 0;
+    $b1_count = 0;
+    $c1_count = 0;
+    
+    foreach ($future_rounds as $round) {
+        if ($round['game_a_result'] == '1') $a1_count++;
+        if ($round['game_b_result'] == '1') $b1_count++;
+        if ($round['game_c_result'] == '1') $c1_count++;
+    }
+    
+    $total = count($future_rounds);
+    $stats['future_a1_percentage'] = round(($a1_count / $total) * 100, 1);
+    $stats['future_b1_percentage'] = round(($b1_count / $total) * 100, 1);
+    $stats['future_c1_percentage'] = round(($c1_count / $total) * 100, 1);
 }
 ?>
 
@@ -506,9 +500,10 @@ if (!empty($future_rounds)) {
                                 <h5>현재 회차: <span class="text-success"><?php echo $stats['current_round_number'] ?></span></h5>
                                 <?php if ($current_round): ?>
                                 <small class="text-muted">
-                                    상태: <?php echo $current_round['status'] ?><br>
-                                    <?php echo date('H:i', strtotime($current_round['start_time'])) ?> ~ <?php echo date('H:i', strtotime($current_round['result_time'])) ?>
-                                </small>
+    배율: A게임 <?php echo $settings_info['game_a1_rate'] ?>/<?php echo $settings_info['game_a2_rate'] ?>배, 
+    B게임 <?php echo $settings_info['game_b1_rate'] ?>/<?php echo $settings_info['game_b2_rate'] ?>배, 
+    C게임 <?php echo $settings_info['game_c1_rate'] ?>/<?php echo $settings_info['game_c2_rate'] ?>배
+</small>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -528,33 +523,39 @@ if (!empty($future_rounds)) {
                             </div>
                         </div>
                         
-                        <?php if (isset($stats['future_high_percentage'])): ?>
-                        <div class="row mt-2">
-                            <div class="col-6">
-                                <div class="stats-card">
-                                    <div class="stats-number"><?php echo $stats['future_high_percentage'] ?>%</div>
-                                    <div class="small text-muted">미래 대 비율</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stats-card">
-                                    <div class="stats-number"><?php echo $stats['future_odd_percentage'] ?>%</div>
-                                    <div class="small text-muted">미래 홀 비율</div>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endif; ?>
+<?php if (isset($stats['future_a1_percentage'])): ?>
+<div class="row mt-2">
+    <div class="col-4">
+        <div class="stats-card">
+            <div class="stats-number text-primary"><?php echo $stats['future_a1_percentage'] ?>%</div>
+            <div class="small text-muted">A1 비율</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="stats-card">
+            <div class="stats-number text-success"><?php echo $stats['future_b1_percentage'] ?>%</div>
+            <div class="small text-muted">B1 비율</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="stats-card">
+            <div class="stats-number text-warning"><?php echo $stats['future_c1_percentage'] ?>%</div>
+            <div class="small text-muted">C1 비율</div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
                         
-                        <div class="mt-3 text-center">
-                            <small class="text-info">
-                                <i class="bi bi-info-circle me-1"></i>
-                                현재 설정: 베팅 <?php echo $settings_info['betting_time'] ?>초 + 결과 <?php echo $settings_info['result_time'] ?>초 = 총 <?php echo $settings_info['game_interval'] ?>초 간격
-                            </small>
-                            <br>
-                            <small class="text-muted">
-                                배율: 대소 <?php echo $settings_info['win_rate_high_low'] ?>배, 홀짝 <?php echo $settings_info['win_rate_odd_even'] ?>배
-                            </small>
-                        </div>
+<div class="mt-3 text-center">
+    <small class="text-info">
+        <i class="bi bi-info-circle me-1"></i>
+        현재 설정: 베팅 <?php echo $settings_info['betting_time'] ?>초 + 결과 <?php echo $settings_info['result_time'] ?>초 = 총 <?php echo $settings_info['game_interval'] ?>초 간격
+    </small>
+    <br>
+    <small class="text-muted">
+        최소/최대 베팅: <?php echo number_format($settings_info['min_bet']) ?>원 ~ <?php echo number_format($settings_info['max_bet']) ?>원
+    </small>
+</div>
                     </div>
                 </div>
 
@@ -580,14 +581,44 @@ if (!empty($future_rounds)) {
                                 </small>
                             </div>
                             
-                            <div class="mb-3">
-                                <label class="form-label">결과 패턴</label>
-                                <select class="form-select" name="pattern">
-                                    <option value="random">완전 랜덤</option>
-                                    <option value="balanced">균형잡힌 (50:50)</option>
-                                    <option value="house_favor">하우스 유리 (70%)</option>
-                                </select>
-                            </div>
+							<div class="mb-3">
+								<label class="form-label">결과 패턴</label>
+								<select class="form-select" name="pattern" id="patternSelect">
+									<option value="random">완전 랜덤</option>
+									<option value="balanced">균형잡힌</option>
+									<option value="custom">커스텀 설정</option>
+								</select>
+							</div>
+<!-- 커스텀 패턴 설정 (숨김 상태) -->
+<div id="customPattern" class="mb-3 d-none">
+    <div class="alert alert-info">
+        <h6>커스텀 패턴 설정</h6>
+        <div class="row g-2">
+            <div class="col-4">
+                <label class="form-label text-primary">A1 비율</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" name="custom_a1_ratio" class="form-control" value="50" min="0" max="100">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+            <div class="col-4">
+                <label class="form-label text-success">B1 비율</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" name="custom_b1_ratio" class="form-control" value="50" min="0" max="100">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+            <div class="col-4">
+                <label class="form-label text-warning">C1 비율</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" name="custom_c1_ratio" class="form-control" value="50" min="0" max="100">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+        </div>
+        <small class="text-muted">* 나머지는 자동으로 2번 옵션에 할당됩니다.</small>
+    </div>
+</div>
                             
                             <button type="submit" class="btn btn-success w-100" 
                                     onclick="return confirm('새로운 회차들을 생성하시겠습니까?\\n\\n연속적인 시간으로 자동 생성됩니다.')">
@@ -631,104 +662,124 @@ if (!empty($future_rounds)) {
                         <?php if (!empty($future_rounds)): ?>
                         <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
                             <table class="table table-hover table-sm">
-                                <thead class="sticky-top bg-white">
-                                    <tr>
-                                        <th>회차</th>
-                                        <th>시작시간</th>
-                                        <th>주사위</th>
-                                        <th>결과</th>
-                                        <th>수정</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($future_rounds as $round): ?>
-                                    <tr class="status-future">
-                                        <td><strong><?php echo $round['round_number'] ?></strong></td>
-                                        <td>
-                                            <span class="badge bg-info time-badge">
-                                                <?php echo date('m/d H:i', strtotime($round['start_time'])) ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="dice-display">
-                                                <div class="dice-num"><?php echo $round['dice1'] ?></div>
-                                                <div class="dice-num"><?php echo $round['dice2'] ?></div>
-                                                <div class="dice-num"><?php echo $round['dice3'] ?></div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <strong><?php echo $round['total'] ?></strong>
-                                            <div class="result-badges">
-                                                <span class="badge bg-<?php echo $round['is_high'] ? 'primary' : 'info' ?> badge-sm">
-                                                    <?php echo $round['is_high'] ? '대' : '소' ?>
-                                                </span>
-                                                <span class="badge bg-<?php echo $round['is_odd'] ? 'success' : 'warning' ?> badge-sm">
-                                                    <?php echo $round['is_odd'] ? '홀' : '짝' ?>
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#editModal<?php echo $round['round_id'] ?>">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+								<thead class="sticky-top bg-white">
+									<tr>
+										<th>회차</th>
+										<th>시작시간</th>
+										<th>A 게임</th>
+										<th>B 게임</th>
+										<th>C 게임</th>
+										<th>수정</th>
+									</tr>
+								</thead>
+<tbody>
+    <?php foreach ($future_rounds as $round): ?>
+    <tr class="status-future">
+        <td><strong><?php echo $round['round_number'] ?></strong></td>
+        <td>
+            <span class="badge bg-info time-badge">
+                <?php echo date('m/d H:i', strtotime($round['start_time'])) ?>
+            </span>
+        </td>
+        <td>
+            <span class="badge bg-primary">
+                A<?php echo $round['game_a_result'] ?: '?' ?>
+            </span>
+        </td>
+        <td>
+            <span class="badge bg-success">
+                B<?php echo $round['game_b_result'] ?: '?' ?>
+            </span>
+        </td>
+        <td>
+            <span class="badge bg-warning">
+                C<?php echo $round['game_c_result'] ?: '?' ?>
+            </span>
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-primary" 
+                    data-bs-toggle="modal" data-bs-target="#editModal<?php echo $round['round_id'] ?>">
+                <i class="bi bi-pencil"></i>
+            </button>
+        </td>
+    </tr>
 
                                     <!-- 수정 모달 -->
-                                    <div class="modal fade" id="editModal<?php echo $round['round_id'] ?>" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title"><?php echo $round['round_number'] ?>회차 결과 수정</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <form method="post">
-                                                    <div class="modal-body">
-                                                        <input type="hidden" name="action" value="update_round_result">
-                                                        <input type="hidden" name="round_id" value="<?php echo $round['round_id'] ?>">
-                                                        
-                                                        <div class="row">
-                                                            <div class="col-4">
-                                                                <label class="form-label">주사위 1</label>
-                                                                <input type="number" class="form-control edit-dice" name="dice1" 
-                                                                       value="<?php echo $round['dice1'] ?>" min="1" max="6" required>
-                                                            </div>
-                                                            <div class="col-4">
-                                                                <label class="form-label">주사위 2</label>
-                                                                <input type="number" class="form-control edit-dice" name="dice2" 
-                                                                       value="<?php echo $round['dice2'] ?>" min="1" max="6" required>
-                                                            </div>
-                                                            <div class="col-4">
-                                                                <label class="form-label">주사위 3</label>
-                                                                <input type="number" class="form-control edit-dice" name="dice3" 
-                                                                       value="<?php echo $round['dice3'] ?>" min="1" max="6" required>
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <div class="mt-3 text-center">
-                                                            <div id="preview<?php echo $round['round_id'] ?>" class="text-muted">
-                                                                현재: <?php echo $round['total'] ?> 
-                                                                (<?php echo $round['is_high'] ? '대' : '소' ?>, 
-                                                                <?php echo $round['is_odd'] ? '홀' : '짝' ?>)
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <div class="mt-2 text-center">
-                                                            <small class="text-info">
-                                                                예정 시간: <?php echo date('Y-m-d H:i', strtotime($round['start_time'])) ?>
-                                                            </small>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                                                        <button type="submit" class="btn btn-primary">저장</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
+									<div class="modal fade" id="editModal<?php echo $round['round_id'] ?>" tabindex="-1">
+										<div class="modal-dialog">
+											<div class="modal-content">
+												<form method="post">
+													<input type="hidden" name="action" value="update_round_result">
+													<input type="hidden" name="round_id" value="<?php echo $round['round_id'] ?>">
+													
+													<div class="modal-header">
+														<h5 class="modal-title">
+															<i class="bi bi-pencil-square me-2"></i>
+															<?php echo $round['round_number'] ?>회차 결과 수정
+														</h5>
+														<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+													</div>
+													
+													<div class="modal-body">
+														<!-- A 게임 선택 -->
+														<div class="mb-3">
+															<label class="form-label fw-bold text-primary">A 게임 결과</label>
+															<div class="btn-group w-100" role="group">
+																<input type="radio" class="btn-check" name="game_a_result" 
+																	   id="game_a1_<?php echo $round['round_id'] ?>" value="1" 
+																	   <?php echo $round['game_a_result'] == '1' ? 'checked' : '' ?> required>
+																<label class="btn btn-outline-primary" for="game_a1_<?php echo $round['round_id'] ?>">A1</label>
+																
+																<input type="radio" class="btn-check" name="game_a_result" 
+																	   id="game_a2_<?php echo $round['round_id'] ?>" value="2"
+																	   <?php echo $round['game_a_result'] == '2' ? 'checked' : '' ?> required>
+																<label class="btn btn-outline-primary" for="game_a2_<?php echo $round['round_id'] ?>">A2</label>
+															</div>
+														</div>
+														
+														<!-- B 게임 선택 -->
+														<div class="mb-3">
+															<label class="form-label fw-bold text-success">B 게임 결과</label>
+															<div class="btn-group w-100" role="group">
+																<input type="radio" class="btn-check" name="game_b_result" 
+																	   id="game_b1_<?php echo $round['round_id'] ?>" value="1"
+																	   <?php echo $round['game_b_result'] == '1' ? 'checked' : '' ?> required>
+																<label class="btn btn-outline-success" for="game_b1_<?php echo $round['round_id'] ?>">B1</label>
+																
+																<input type="radio" class="btn-check" name="game_b_result" 
+																	   id="game_b2_<?php echo $round['round_id'] ?>" value="2"
+																	   <?php echo $round['game_b_result'] == '2' ? 'checked' : '' ?> required>
+																<label class="btn btn-outline-success" for="game_b2_<?php echo $round['round_id'] ?>">B2</label>
+															</div>
+														</div>
+														
+														<!-- C 게임 선택 -->
+														<div class="mb-3">
+															<label class="form-label fw-bold text-warning">C 게임 결과</label>
+															<div class="btn-group w-100" role="group">
+																<input type="radio" class="btn-check" name="game_c_result" 
+																	   id="game_c1_<?php echo $round['round_id'] ?>" value="1"
+																	   <?php echo $round['game_c_result'] == '1' ? 'checked' : '' ?> required>
+																<label class="btn btn-outline-warning" for="game_c1_<?php echo $round['round_id'] ?>">C1</label>
+																
+																<input type="radio" class="btn-check" name="game_c_result" 
+																	   id="game_c2_<?php echo $round['round_id'] ?>" value="2"
+																	   <?php echo $round['game_c_result'] == '2' ? 'checked' : '' ?> required>
+																<label class="btn btn-outline-warning" for="game_c2_<?php echo $round['round_id'] ?>">C2</label>
+															</div>
+														</div>
+													</div>
+													
+													<div class="modal-footer">
+														<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+														<button type="submit" class="btn btn-primary">
+															<i class="bi bi-check-circle me-1"></i>결과 저장
+														</button>
+													</div>
+												</form>
+											</div>
+										</div>
+									</div>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
@@ -753,47 +804,46 @@ if (!empty($future_rounds)) {
                         <?php if (!empty($completed_rounds)): ?>
                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                             <table class="table table-hover table-sm">
-                                <thead class="sticky-top bg-white">
-                                    <tr>
-                                        <th>회차</th>
-                                        <th>완료시간</th>
-                                        <th>주사위</th>
-                                        <th>결과</th>
-                                        <th>참여</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($completed_rounds as $round): ?>
-                                    <tr class="status-completed">
-                                        <td><strong><?php echo $round['round_number'] ?></strong></td>
-                                        <td>
-                                            <span class="badge bg-success time-badge">
-                                                <?php echo date('m/d H:i', strtotime($round['result_time'])) ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="dice-display">
-                                                <div class="dice-num"><?php echo $round['dice1'] ?></div>
-                                                <div class="dice-num"><?php echo $round['dice2'] ?></div>
-                                                <div class="dice-num"><?php echo $round['dice3'] ?></div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <strong><?php echo $round['total'] ?></strong>
-                                            <div class="result-badges">
-                                                <span class="badge bg-<?php echo $round['is_high'] ? 'primary' : 'info' ?> badge-sm">
-                                                    <?php echo $round['is_high'] ? '대' : '소' ?>
-                                                </span>
-                                                <span class="badge bg-<?php echo $round['is_odd'] ? 'success' : 'warning' ?> badge-sm">
-                                                    <?php echo $round['is_odd'] ? '홀' : '짝' ?>
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <small><?php echo $round['total_players'] ?? 0 ?>명</small>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
+<thead class="sticky-top bg-white">
+    <tr>
+        <th>회차</th>
+        <th>완료시간</th>
+        <th>A 게임</th>
+        <th>B 게임</th>
+        <th>C 게임</th>
+        <th>참여</th>
+    </tr>
+</thead>
+<tbody>
+    <?php foreach ($completed_rounds as $round): ?>
+    <tr class="status-completed">
+        <td><strong><?php echo $round['round_number'] ?></strong></td>
+        <td>
+            <span class="badge bg-success time-badge">
+                <?php echo date('m/d H:i', strtotime($round['result_time'])) ?>
+            </span>
+        </td>
+        <td>
+            <span class="badge bg-primary">
+                A<?php echo $round['game_a_result'] ?: '?' ?>
+            </span>
+        </td>
+        <td>
+            <span class="badge bg-success">
+                B<?php echo $round['game_b_result'] ?: '?' ?>
+            </span>
+        </td>
+        <td>
+            <span class="badge bg-warning">
+                C<?php echo $round['game_c_result'] ?: '?' ?>
+            </span>
+        </td>
+        <td>
+            <small><?php echo $round['total_players'] ?? 0 ?>명</small>
+        </td>
+    </tr>
+    <?php endforeach; ?>
+</tbody>
                                 </tbody>
                             </table>
                         </div>
@@ -833,6 +883,15 @@ if (!empty($future_rounds)) {
                 });
             });
         });
+		    // 패턴 선택에 따른 커스텀 설정 표시/숨김
+    document.getElementById('patternSelect').addEventListener('change', function() {
+        const customDiv = document.getElementById('customPattern');
+        if (this.value === 'custom') {
+            customDiv.classList.remove('d-none');
+        } else {
+            customDiv.classList.add('d-none');
+        }
+    });
     </script>
 	<?php if (!empty($message) && $message_type === 'success' && $is_popup): ?>
 <script>

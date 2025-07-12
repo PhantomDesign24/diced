@@ -112,7 +112,7 @@ if (!$current_round) {
 $last_result_sql = "
     SELECT * FROM dice_game_rounds 
     WHERE status = 'completed' 
-    AND dice1 IS NOT NULL 
+    AND game_a_result IS NOT NULL 
     ORDER BY round_number DESC 
     LIMIT 1
 ";
@@ -183,8 +183,7 @@ $g5['title'] = '주사위 게임';
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"></noscript>
     
     <!-- 게임 CSS -->
-    <link rel="stylesheet" href="<?php echo G5_URL?>/game/css/game.css">
-    
+    <link rel="stylesheet" href="<?php echo G5_URL?>/game/css/game.css?ver=<?php echo time();?>">
     <!-- 인라인 CSS (타이머 및 기본 스타일) -->
     <style>
         .game-body {
@@ -208,7 +207,64 @@ $g5['title'] = '주사위 게임';
             border: 1px solid rgba(255,255,255,0.2);
             margin-bottom: 1rem;
         }
-        
+            /* A/B/C 게임 베팅 버튼 스타일 추가 */
+    .bet-button {
+        border: 2px solid #dee2e6 !important;
+        background: #ffffff !important;
+        color: #495057 !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+    }
+    
+    .bet-button:hover:not(:disabled) {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* A 게임 */
+    .bet-button[data-game="A"]:hover:not(:disabled) {
+        border-color: #0d6efd !important;
+        background-color: #e7f1ff !important;
+    }
+    
+    .bet-button[data-game="A"].active {
+        border-color: #0d6efd !important;
+        background-color: #0d6efd !important;
+        color: #ffffff !important;
+    }
+    
+    /* B 게임 */
+    .bet-button[data-game="B"]:hover:not(:disabled) {
+        border-color: #198754 !important;
+        background-color: #d1e7dd !important;
+    }
+    
+    .bet-button[data-game="B"].active {
+        border-color: #198754 !important;
+        background-color: #198754 !important;
+        color: #ffffff !important;
+    }
+    
+    /* C 게임 */
+    .bet-button[data-game="C"]:hover:not(:disabled) {
+        border-color: #ffc107 !important;
+        background-color: #fff3cd !important;
+    }
+    
+    .bet-button[data-game="C"].active {
+        border-color: #ffc107 !important;
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    
+    .bet-button.active small {
+        opacity: 0.9;
+    }
+    
+    .bet-button:disabled {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+    }
         .timer-display {
             font-size: 1.5rem;
             font-weight: bold;
@@ -243,6 +299,26 @@ $g5['title'] = '주사위 게임';
             border-color: #667eea;
             background: #667eea;
             color: #fff;
+        }
+        
+        /* A/B/C 게임 결과 표시 스타일 */
+        .game-result-box {
+            transition: transform 0.2s;
+        }
+        
+        .game-result-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .game-result-box h6 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .game-result-box h3 {
+            font-weight: bold;
+            letter-spacing: 1px;
         }
         
         .dice-container {
@@ -383,31 +459,32 @@ $g5['title'] = '주사위 게임';
         <!-- 최근 결과 표시 -->
         <div class="card dice-result">
             <div class="card-body">
-                <?php if ($last_result && isset($last_result['dice1'])): ?>
+                <?php if ($last_result && isset($last_result['game_a_result'])): ?>
                     <h6 class="text-muted mb-3">이전 회차 결과 (<?php echo $last_result['round_number']; ?>회차)</h6>
-                    <div id="diceContainer" class="dice-container">
-                        <div class="dice dice-<?php echo $last_result['dice1']; ?>">
-                            <?php for($i = 0; $i < $last_result['dice1']; $i++): ?>
-                                <div class="dice-dot"></div>
-                            <?php endfor; ?>
+                    <div class="text-center">
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <div class="game-result-box bg-primary text-white p-3 rounded">
+                                    <h6 class="mb-1">A 게임</h6>
+                                    <h3 class="mb-0">A<?php echo $last_result['game_a_result']; ?></h3>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="game-result-box bg-success text-white p-3 rounded">
+                                    <h6 class="mb-1">B 게임</h6>
+                                    <h3 class="mb-0">B<?php echo $last_result['game_b_result']; ?></h3>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="game-result-box bg-warning text-dark p-3 rounded">
+                                    <h6 class="mb-1">C 게임</h6>
+                                    <h3 class="mb-0">C<?php echo $last_result['game_c_result']; ?></h3>
+                                </div>
+                            </div>
                         </div>
-                        <div class="dice dice-<?php echo $last_result['dice2']; ?>">
-                            <?php for($i = 0; $i < $last_result['dice2']; $i++): ?>
-                                <div class="dice-dot"></div>
-                            <?php endfor; ?>
-                        </div>
-                        <div class="dice dice-<?php echo $last_result['dice3']; ?>">
-                            <?php for($i = 0; $i < $last_result['dice3']; $i++): ?>
-                                <div class="dice-dot"></div>
-                            <?php endfor; ?>
-                        </div>
-                    </div>
-                    <div class="result-display">
-                        <div class="result-summary">
-                            <?php echo $last_result['total']; ?> 
-                            <?php echo $last_result['is_high'] ? '대' : '소'; ?> 
-                            <?php echo $last_result['is_odd'] ? '홀' : '짝'; ?>
-                        </div>
+                        <small class="text-muted">
+                            결과 발표: <?php echo date('H:i', strtotime($last_result['result_time'])); ?>
+                        </small>
                     </div>
                 <?php else: ?>
                     <h6 class="text-muted mb-3">이전 회차 결과</h6>
@@ -422,122 +499,157 @@ $g5['title'] = '주사위 게임';
 
         <!-- 베팅 영역 -->
         <?php if ($game_phase === 'betting'): ?>
-        <!-- 베팅 옵션 버튼들 -->
-        <div class="card">
-            <div class="card-body">
-                <h6 class="text-muted mb-3">베팅 선택</h6>
-                
-                <!-- 대소 선택 -->
-                <div class="row mb-3">
-                    <div class="col-6">
-                        <button type="button" class="btn bet-button w-100 py-3" 
-                                data-group="high_low" data-value="low">
-                            <div class="fw-bold">소 (3-10)</div>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button type="button" class="btn bet-button w-100 py-3" 
-                                data-group="high_low" data-value="high">
-                            <div class="fw-bold">대 (11-18)</div>
-                        </button>
-                    </div>
+<div class="card">
+    <div class="card-body">
+        <h6 class="text-muted mb-3">베팅 선택</h6>
+        
+        <!-- A 게임 선택 -->
+        <div class="mb-3">
+            <label class="form-label fw-bold text-primary">
+                <i class="bi bi-dice-1 me-1"></i>A 게임
+            </label>
+            <div class="row">
+                <div class="col-6">
+                    <button type="button" class="btn bet-button w-100 py-3" 
+                            data-game="A" data-option="1">
+                        <div class="fw-bold">A1</div>
+                        <small class="text-muted">배율 x<?php echo $config['game_a1_rate'] ?? '2.0'; ?></small>
+                    </button>
                 </div>
-
-                <!-- 홀짝 선택 -->
-                <div class="row mb-3">
-                    <div class="col-6">
-                        <button type="button" class="btn bet-button w-100 py-3" 
-                                data-group="odd_even" data-value="odd">
-                            <div class="fw-bold">홀</div>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button type="button" class="btn bet-button w-100 py-3" 
-                                data-group="odd_even" data-value="even">
-                            <div class="fw-bold">짝</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 베팅 폼 -->
-        <form id="bettingForm">
-            <div class="card">
-                <div class="card-body">
-                    <!-- 현재 선택 표시 -->
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <label class="form-label">현재 선택</label>
-                            <p id="currentSelection" class="mb-0">선택 안함</p>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">보유머니</label>
-                            <p class="mb-0" id="userMoney"><?php echo number_format($member_point); ?>P</p>
-                        </div>
-                    </div>
-
-                    <!-- 베팅 금액 입력 -->
-                    <div class="mb-3">
-                        <label class="form-label">베팅금액</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0">
-                                <i class="bi bi-currency-dollar text-primary"></i>
-                            </span>
-                            <input type="number" class="form-control border-start-0" id="betAmount" 
-                                   placeholder="베팅할 포인트를 입력하세요"
-                                   min="<?php echo $config['min_bet']; ?>" 
-                                   max="<?php echo min($config['max_bet'], $member_point); ?>">
-                        </div>
-                        <small class="text-muted">
-                            최소: <?php echo number_format($config['min_bet']); ?>P, 
-                            최대: <?php echo number_format(min($config['max_bet'], $member_point)); ?>P
-                        </small>
-                    </div>
-
-                    <!-- 합산 금액 -->
-                    <div class="mb-3">
-                        <label class="form-label">합산금액</label>
-                        <p id="totalBetAmount" class="h5">0P</p>
-                    </div>
-
-                    <!-- 히든 필드들 -->
-                    <input type="hidden" id="selectedHighLow" name="high_low" value="">
-                    <input type="hidden" id="selectedOddEven" name="odd_even" value="">
-                    <input type="hidden" id="roundId" name="round_id" value="<?php echo $current_round['round_id']; ?>">
-                    <input type="hidden" id="roundNumber" name="round_number" value="<?php echo $current_round['round_number']; ?>">
-
-                    <!-- 베팅 버튼 -->
-                    <button type="submit" class="btn btn-warning w-100 py-3" id="submitBet" disabled>
-                        <i class="bi bi-play-circle me-2"></i>게임신청
+                <div class="col-6">
+                    <button type="button" class="btn bet-button w-100 py-3" 
+                            data-game="A" data-option="2">
+                        <div class="fw-bold">A2</div>
+                        <small class="text-muted">배율 x<?php echo $config['game_a2_rate'] ?? '2.0'; ?></small>
                     </button>
                 </div>
             </div>
-        </form>
-        
-        <?php else: ?>
-        <!-- 베팅 불가 상태 -->
-        <div class="card">
-            <div class="card-body text-center">
-                <?php if ($game_phase === 'scheduled'): ?>
-                    <i class="bi bi-clock text-muted mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="text-muted">게임 시작 대기중</h5>
-                    <p class="text-muted mb-0">
-                        <?php echo date('H:i', strtotime($current_round['start_time'])); ?>에 
-                        <?php echo $current_round['round_number']; ?>회차가 시작됩니다
-                    </p>
-                <?php elseif ($game_phase === 'waiting'): ?>
-                    <i class="bi bi-hourglass-split text-warning mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="text-warning">베팅 마감</h5>
-                    <p class="text-muted mb-0">결과 발표를 기다려주세요</p>
-                <?php else: ?>
-                    <i class="bi bi-exclamation-triangle text-muted mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="text-muted">게임 준비중</h5>
-                    <p class="text-muted mb-0">잠시 후 다시 시도해주세요</p>
-                <?php endif; ?>
+        </div>
+
+        <!-- B 게임 선택 -->
+        <div class="mb-3">
+            <label class="form-label fw-bold text-success">
+                <i class="bi bi-dice-2 me-1"></i>B 게임
+            </label>
+            <div class="row">
+                <div class="col-6">
+                    <button type="button" class="btn bet-button w-100 py-3" 
+                            data-game="B" data-option="1">
+                        <div class="fw-bold">B1</div>
+                        <small class="text-muted">배율 x<?php echo $config['game_b1_rate'] ?? '2.0'; ?></small>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="btn bet-button w-100 py-3" 
+                            data-game="B" data-option="2">
+                        <div class="fw-bold">B2</div>
+                        <small class="text-muted">배율 x<?php echo $config['game_b2_rate'] ?? '2.0'; ?></small>
+                    </button>
+                </div>
             </div>
         </div>
+
+        <!-- C 게임 선택 -->
+        <div class="mb-3">
+            <label class="form-label fw-bold text-warning">
+                <i class="bi bi-dice-3 me-1"></i>C 게임
+            </label>
+            <div class="row">
+                <div class="col-6">
+                    <button type="button" class="btn bet-button w-100 py-3" 
+                            data-game="C" data-option="1">
+                        <div class="fw-bold">C1</div>
+                        <small class="text-muted">배율 x<?php echo $config['game_c1_rate'] ?? '2.0'; ?></small>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="btn bet-button w-100 py-3" 
+                            data-game="C" data-option="2">
+                        <div class="fw-bold">C2</div>
+                        <small class="text-muted">배율 x<?php echo $config['game_c2_rate'] ?? '2.0'; ?></small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 베팅 폼 -->
+<form id="bettingForm">
+    <div class="card">
+        <div class="card-body">
+            <!-- 현재 선택 표시 -->
+            <div class="row mb-3">
+                <div class="col-6">
+                    <label class="form-label">현재 선택</label>
+                    <p id="currentSelection" class="mb-0">선택 안함</p>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">보유머니</label>
+                    <p class="mb-0" id="userMoney"><?php echo number_format($member_point); ?>P</p>
+                </div>
+            </div>
+
+            <!-- 베팅 금액 입력 -->
+            <div class="mb-3">
+                <label class="form-label">베팅금액</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-currency-dollar text-primary"></i>
+                    </span>
+                    <input type="number" class="form-control border-start-0" id="betAmount" 
+                           placeholder="베팅할 포인트를 입력하세요"
+                           min="<?php echo $config['min_bet']; ?>" 
+                           max="<?php echo min($config['max_bet'], $member_point); ?>">
+                </div>
+                <small class="text-muted">
+                    최소: <?php echo number_format($config['min_bet']); ?>P, 
+                    최대: <?php echo number_format(min($config['max_bet'], $member_point)); ?>P
+                </small>
+            </div>
+
+            <!-- 예상 당첨금 -->
+            <div class="mb-3">
+                <label class="form-label">예상 당첨금</label>
+                <p id="expectedWin" class="h5">0P</p>
+                <small class="text-muted" id="rateInfo">선택한 게임의 배율이 적용됩니다</small>
+            </div>
+
+            <!-- 히든 필드들 -->
+            <input type="hidden" id="roundId" name="round_id" value="<?php echo $current_round['round_id']; ?>">
+            <input type="hidden" id="roundNumber" name="round_number" value="<?php echo $current_round['round_number']; ?>">
+
+            <!-- 베팅 버튼 -->
+            <button type="submit" class="btn btn-warning w-100 py-3" id="submitBet" disabled>
+                <i class="bi bi-play-circle me-2"></i>게임신청
+            </button>
+        </div>
+    </div>
+</form>
+
+<?php else: ?>
+<!-- 베팅 불가 상태 (기존과 동일) -->
+<div class="card">
+    <div class="card-body text-center">
+        <?php if ($game_phase === 'scheduled'): ?>
+            <i class="bi bi-clock text-muted mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-muted">게임 시작 대기중</h5>
+            <p class="text-muted mb-0">
+                <?php echo date('H:i', strtotime($current_round['start_time'])); ?>에 
+                <?php echo $current_round['round_number']; ?>회차가 시작됩니다
+            </p>
+        <?php elseif ($game_phase === 'waiting'): ?>
+            <i class="bi bi-hourglass-split text-warning mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-warning">베팅 마감</h5>
+            <p class="text-muted mb-0">결과 발표를 기다려주세요</p>
+        <?php else: ?>
+            <i class="bi bi-exclamation-triangle text-muted mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-muted">게임 준비중</h5>
+            <p class="text-muted mb-0">잠시 후 다시 시도해주세요</p>
         <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
 
         <!-- 하단 메뉴 -->
         <div class="row g-2 mt-3">
@@ -564,25 +676,30 @@ $g5['title'] = '주사위 게임';
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
-        // ===================================
-        // 게임 설정 변수 (관리자 설정 연동)
-        // ===================================
-        const gameConfig = {
-            minBet: <?php echo $config['min_bet']; ?>,
-            maxBet: <?php echo min($config['max_bet'], $member_point); ?>,
-            userPoint: <?php echo $member_point; ?>,
-            roundId: <?php echo $current_round['round_id']; ?>,
-            roundNumber: <?php echo $current_round['round_number']; ?>,
-            endTime: '<?php echo $current_round['end_time']; ?>',
-            resultTime: '<?php echo $current_round['result_time']; ?>',
-            startTime: '<?php echo $current_round['start_time']; ?>',
-            gamePhase: '<?php echo $game_phase; ?>',
-            gameInterval: <?php echo $game_interval; ?>,
-            bettingTime: <?php echo $betting_time; ?>,
-            resultTimeDuration: <?php echo $result_time_duration; ?>,
-            winRateHighLow: <?php echo $config['win_rate_high_low']; ?>,
-            winRateOddEven: <?php echo $config['win_rate_odd_even']; ?>
-        };
+// ===================================
+// 게임 설정 변수 (관리자 설정 연동)
+// ===================================
+const gameConfig = {
+    minBet: <?php echo $config['min_bet']; ?>,
+    maxBet: <?php echo min($config['max_bet'], $member_point); ?>,
+    userPoint: <?php echo $member_point; ?>,
+    roundId: <?php echo $current_round['round_id']; ?>,
+    roundNumber: <?php echo $current_round['round_number']; ?>,
+    endTime: '<?php echo $current_round['end_time']; ?>',
+    resultTime: '<?php echo $current_round['result_time']; ?>',
+    startTime: '<?php echo $current_round['start_time']; ?>',
+    gamePhase: '<?php echo $game_phase; ?>',
+    gameInterval: <?php echo $game_interval; ?>,
+    bettingTime: <?php echo $betting_time; ?>,
+    resultTimeDuration: <?php echo $result_time_duration; ?>,
+    // A/B/C 게임 배율 추가
+    gameA1Rate: <?php echo $config['game_a1_rate'] ?? '2.0'; ?>,
+    gameA2Rate: <?php echo $config['game_a2_rate'] ?? '2.0'; ?>,
+    gameB1Rate: <?php echo $config['game_b1_rate'] ?? '2.0'; ?>,
+    gameB2Rate: <?php echo $config['game_b2_rate'] ?? '2.0'; ?>,
+    gameC1Rate: <?php echo $config['game_c1_rate'] ?? '2.0'; ?>,
+    gameC2Rate: <?php echo $config['game_c2_rate'] ?? '2.0'; ?>
+};
         
         // ===================================
         // 타이머 설정 및 시작
@@ -698,101 +815,175 @@ $g5['title'] = '주사위 게임';
             });
         });
         
-        // ===================================
-        // 베팅 관련 스크립트 (간단 버전)
-        // ===================================
-        <?php if ($game_phase === 'betting'): ?>
-        let selectedHighLow = '';
-        let selectedOddEven = '';
-        
-        $('.bet-button').on('click', function() {
-            const group = $(this).data('group');
-            const value = $(this).data('value');
-            
-            $(`[data-group="${group}"]`).removeClass('active');
-            $(this).addClass('active');
-            
-            if (group === 'high_low') {
-                selectedHighLow = value;
-                $('#selectedHighLow').val(value);
-            } else if (group === 'odd_even') {
-                selectedOddEven = value;
-                $('#selectedOddEven').val(value);
-            }
-            
-            updateSelectionDisplay();
-            updateSubmitButton();
-        });
-        
-$('#betAmount').on('input', function() {
-    const betAmount = parseInt($(this).val()) || 0;
-    
-    // 배율 계산
-    let totalRate = 1;
-    if (selectedHighLow) {
-        totalRate *= gameConfig.winRateHighLow;
+// ===================================
+// 베팅 관련 스크립트 (A/B/C 게임용)
+// ===================================
+<?php if ($game_phase === 'betting'): ?>
+// 선택된 베팅 정보를 저장하는 객체
+let selectedBets = {
+    A: null,
+    B: null,
+    C: null
+};
+
+// 게임별 배율 정보
+const gameRates = {
+    A: {
+        1: <?php echo $config['game_a1_rate'] ?? '2.0'; ?>,
+        2: <?php echo $config['game_a2_rate'] ?? '2.0'; ?>
+    },
+    B: {
+        1: <?php echo $config['game_b1_rate'] ?? '2.0'; ?>,
+        2: <?php echo $config['game_b2_rate'] ?? '2.0'; ?>
+    },
+    C: {
+        1: <?php echo $config['game_c1_rate'] ?? '2.0'; ?>,
+        2: <?php echo $config['game_c2_rate'] ?? '2.0'; ?>
     }
-    if (selectedOddEven) {
-        totalRate *= gameConfig.winRateOddEven;
+};
+
+// 베팅 버튼 클릭 이벤트
+$('.bet-button').on('click', function() {
+    const game = $(this).data('game');
+    const option = $(this).data('option');
+    
+    // 같은 게임의 다른 버튼 비활성화
+    $(`.bet-button[data-game="${game}"]`).removeClass('active');
+    
+    // 현재 버튼 활성화/비활성화 토글
+    if (selectedBets[game] === option) {
+        // 이미 선택된 것을 다시 클릭하면 선택 해제
+        $(this).removeClass('active');
+        selectedBets[game] = null;
+    } else {
+        // 새로운 선택
+        $(this).addClass('active');
+        selectedBets[game] = option;
     }
     
-    // 예상 당첨금 계산 (베팅금액 × 총배율)
-    const expectedWin = betAmount * totalRate;
-    
-    $('#totalBetAmount').text(expectedWin.toLocaleString() + 'P');
+    updateSelectionDisplay();
+    updateExpectedWin();
     updateSubmitButton();
 });
-        function updateSelectionDisplay() {
-            let display = [];
-            if (selectedHighLow) {
-                display.push(selectedHighLow === 'high' ? '대' : '소');
-            }
-            if (selectedOddEven) {
-                display.push(selectedOddEven === 'odd' ? '홀' : '짝');
-            }
-            $('#currentSelection').text(display.length > 0 ? display.join(' ') : '선택 안함');
+
+// 베팅 금액 입력 이벤트
+$('#betAmount').on('input', function() {
+    updateExpectedWin();
+    updateSubmitButton();
+});
+
+// 현재 선택 표시 업데이트
+function updateSelectionDisplay() {
+    let selections = [];
+    
+    for (let game in selectedBets) {
+        if (selectedBets[game]) {
+            selections.push(`${game}${selectedBets[game]}`);
         }
-        
-        function updateSubmitButton() {
-            const betAmount = parseInt($('#betAmount').val()) || 0;
-            const canSubmit = selectedHighLow && selectedOddEven && betAmount >= gameConfig.minBet;
-            $('#submitBet').prop('disabled', !canSubmit);
+    }
+    
+    if (selections.length > 0) {
+        $('#currentSelection').text(selections.join(', '));
+    } else {
+        $('#currentSelection').text('선택 안함');
+    }
+}
+
+// 예상 당첨금 계산 및 표시
+function updateExpectedWin() {
+    const betAmount = parseInt($('#betAmount').val()) || 0;
+    
+    if (betAmount === 0) {
+        $('#expectedWin').text('0P');
+        $('#rateInfo').text('선택한 게임의 배율이 적용됩니다');
+        return;
+    }
+    
+    let totalWin = 0;
+    let rateDetails = [];
+    
+    // 각 게임별로 예상 당첨금 계산
+    for (let game in selectedBets) {
+        if (selectedBets[game]) {
+            const rate = gameRates[game][selectedBets[game]];
+            const win = Math.floor(betAmount * rate);
+            totalWin += win;
+            rateDetails.push(`${game}${selectedBets[game]} (x${rate})`);
         }
-        
-        $('#bettingForm').on('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                round_id: gameConfig.roundId,
-                round_number: gameConfig.roundNumber,
-                high_low: selectedHighLow,
-                odd_even: selectedOddEven,
-                bet_amount: parseInt($('#betAmount').val())
-            };
-            
-            $('#submitBet').prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>처리중...');
-            
-            $.ajax({
-                url: './bet_process.php',
-                type: 'POST',
-                dataType: 'json',
-                data: formData,
-                success: function(response) {
-                    if (response.success) {
-                        alert('베팅이 완료되었습니다!');
-                        location.reload();
-                    } else {
-                        alert(response.message || '베팅 처리 중 오류가 발생했습니다.');
-                        $('#submitBet').prop('disabled', false).html('<i class="bi bi-play-circle me-2"></i>게임신청');
-                    }
-                },
-                error: function() {
-                    alert('서버 통신 오류가 발생했습니다.');
-                    $('#submitBet').prop('disabled', false).html('<i class="bi bi-play-circle me-2"></i>게임신청');
-                }
-            });
-        });
-        <?php endif; ?>
+    }
+    
+    $('#expectedWin').text(totalWin.toLocaleString() + 'P');
+    
+    if (rateDetails.length > 0) {
+        $('#rateInfo').text('적용 배율: ' + rateDetails.join(', '));
+    } else {
+        $('#rateInfo').text('게임을 선택해주세요');
+    }
+}
+
+// 제출 버튼 활성화/비활성화
+function updateSubmitButton() {
+    const betAmount = parseInt($('#betAmount').val()) || 0;
+    const hasSelection = Object.values(selectedBets).some(bet => bet !== null);
+    const validAmount = betAmount >= gameConfig.minBet && betAmount <= gameConfig.maxBet;
+    
+    $('#submitBet').prop('disabled', !hasSelection || !validAmount);
+}
+
+// 폼 제출 이벤트
+// 폼 제출 이벤트
+$('#bettingForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    // 선택된 베팅 정보를 배열로 변환
+    let bets = {};
+    for (let game in selectedBets) {
+        if (selectedBets[game]) {
+            if (!bets[game]) bets[game] = {};
+            bets[game][selectedBets[game]] = 1;
+        }
+    }
+    
+    // FormData 객체 생성
+    const formData = new FormData();
+    formData.append('round_id', gameConfig.roundId);
+    formData.append('round_number', gameConfig.roundNumber);
+    formData.append('bet_amount', parseInt($('#betAmount').val()));
+    
+    // bets 데이터를 개별적으로 추가
+    for (let game in bets) {
+        for (let option in bets[game]) {
+            formData.append(`bets[${game}][${option}]`, bets[game][option]);
+        }
+    }
+    
+    $('#submitBet').prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>처리중...');
+    
+    $.ajax({
+        url: './bet_process.php',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert('베팅이 완료되었습니다!');
+                location.reload();
+            } else {
+                alert(response.message || '베팅 처리 중 오류가 발생했습니다.');
+                $('#submitBet').prop('disabled', false).html('<i class="bi bi-play-circle me-2"></i>게임신청');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', status, error);
+            console.error('Response:', xhr.responseText);
+            alert('서버 통신 오류가 발생했습니다.');
+            $('#submitBet').prop('disabled', false).html('<i class="bi bi-play-circle me-2"></i>게임신청');
+        }
+    });
+});
+<?php endif; ?>
     </script>
     
     <!-- 게임 JS는 인라인으로 처리 -->

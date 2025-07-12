@@ -4,7 +4,7 @@
 * 위치: /game/history.php
 * 기능: 주사위 게임 히스토리 페이지 (깔끔한 디자인)
 * 작성일: 2025-06-12
-* 수정일: 2025-06-12
+* 수정일: 2025-01-07 (A/B/C 게임으로 전환)
 */
 
 // ===================================
@@ -38,8 +38,8 @@ $total_pages = ceil($total_count / $per_page);
 $history_sql = "
     SELECT 
         b.*,
-        r.dice1, r.dice2, r.dice3, r.total as round_total,
-        r.is_high, r.is_odd, r.status as round_status
+        r.game_a_result, r.game_b_result, r.game_c_result,
+        r.status as round_status, r.round_number
     FROM dice_game_bets b
     LEFT JOIN dice_game_rounds r ON b.round_id = r.round_id
     WHERE b.mb_id = '{$member['mb_id']}' 
@@ -52,14 +52,21 @@ $history_result = sql_query($history_sql);
 $stats_sql = "
     SELECT 
         COUNT(*) as total_bets,
-        SUM(bet_amount) as total_bet,
-        SUM(win_amount) as total_win,
-        SUM(CASE WHEN is_win = 1 THEN 1 ELSE 0 END) as win_count,
-        COUNT(DISTINCT round_number) as total_rounds
+        COALESCE(SUM(bet_amount), 0) as total_bet,
+        COALESCE(SUM(win_amount), 0) as total_win,
+        SUM(CASE WHEN status = 'win' THEN 1 ELSE 0 END) as win_count,
+        COUNT(DISTINCT round_id) as total_rounds
     FROM dice_game_bets 
     WHERE mb_id = '{$member['mb_id']}'
 ";
 $stats = sql_fetch($stats_sql);
+
+// NULL 값 처리
+$stats['total_bets'] = $stats['total_bets'] ?? 0;
+$stats['total_bet'] = $stats['total_bet'] ?? 0;
+$stats['total_win'] = $stats['total_win'] ?? 0;
+$stats['win_count'] = $stats['win_count'] ?? 0;
+$stats['total_rounds'] = $stats['total_rounds'] ?? 0;
 
 // ===================================
 // 헬퍼 함수들
@@ -67,26 +74,22 @@ $stats = sql_fetch($stats_sql);
 
 /**
  * 베팅 타입을 한글로 변환
- * @param string $high_low 대소 베팅
- * @param string $odd_even 홀짝 베팅
+ * @param string $game_type 게임 타입 (A/B/C)
+ * @param string $bet_option 베팅 옵션 (1/2)
  * @return string 한글 베팅 타입
  */
-function getBetText($high_low, $odd_even) {
-    $high_low_text = $high_low === 'high' ? '대' : '소';
-    $odd_even_text = $odd_even === 'odd' ? '홀' : '짝';
-    return $high_low_text . ' ' . $odd_even_text;
+function getBetText($game_type, $bet_option) {
+    return $game_type . $bet_option;
 }
 
 /**
  * 회차 결과를 한글로 변환
- * @param int $is_high 대소 결과
- * @param int $is_odd 홀짝 결과
- * @return string 한글 결과
+ * @param string $game_type 게임 타입
+ * @param string $result 결과값
+ * @return string 결과 텍스트
  */
-function getResultText($is_high, $is_odd) {
-    $high_low_text = $is_high ? '대' : '소';
-    $odd_even_text = $is_odd ? '홀' : '짝';
-    return $high_low_text . ' ' . $odd_even_text;
+function getResultText($game_type, $result) {
+    return $game_type . $result;
 }
 
 // ===================================
@@ -201,11 +204,11 @@ $g5['title'] = '주사위 게임 히스토리';
                                             <span class="round-date"><?php echo date('m/d H:i', strtotime($row['created_at'])); ?></span>
                                         </div>
                                         <div class="result-badge">
-                                            <?php if ($row['is_win'] === '1'): ?>
+                                            <?php if ($row['status'] === 'win'): ?>
                                                 <span class="badge badge-win">
                                                     <i class="bi bi-trophy me-1"></i>승리
                                                 </span>
-                                            <?php elseif ($row['is_win'] === '0'): ?>
+                                            <?php elseif ($row['status'] === 'lose'): ?>
                                                 <span class="badge badge-lose">
                                                     <i class="bi bi-x-circle me-1"></i>패배
                                                 </span>
@@ -218,27 +221,14 @@ $g5['title'] = '주사위 게임 히스토리';
                                     </div>
                                     
                                     <?php if ($row['round_status'] === 'completed'): ?>
-                                        <!-- 주사위 결과 -->
+                                        <!-- 게임 결과 -->
                                         <div class="dice-result-row">
-                                            <div class="dice-container-mini">
-                                                <div class="dice-mini dice-<?php echo $row['dice1']; ?>">
-                                                    <?php for($i = 0; $i < $row['dice1']; $i++): ?>
-                                                        <div class="dice-dot-mini"></div>
-                                                    <?php endfor; ?>
-                                                </div>
-                                                <div class="dice-mini dice-<?php echo $row['dice2']; ?>">
-                                                    <?php for($i = 0; $i < $row['dice2']; $i++): ?>
-                                                        <div class="dice-dot-mini"></div>
-                                                    <?php endfor; ?>
-                                                </div>
-                                                <div class="dice-mini dice-<?php echo $row['dice3']; ?>">
-                                                    <?php for($i = 0; $i < $row['dice3']; $i++): ?>
-                                                        <div class="dice-dot-mini"></div>
-                                                    <?php endfor; ?>
-                                                </div>
-                                            </div>
                                             <div class="result-text">
-                                                <strong><?php echo $row['round_total']; ?> <?php echo getResultText($row['is_high'], $row['is_odd']); ?></strong>
+                                                <strong>
+                                                    A<?php echo $row['game_a_result']; ?> 
+                                                    B<?php echo $row['game_b_result']; ?> 
+                                                    C<?php echo $row['game_c_result']; ?>
+                                                </strong>
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -246,10 +236,10 @@ $g5['title'] = '주사위 게임 히스토리';
                                     <!-- 베팅 정보 -->
                                     <div class="bet-info-row">
                                         <div class="bet-details">
-                                            <span class="bet-type">내 베팅: <strong><?php echo getBetText($row['bet_high_low'], $row['bet_odd_even']); ?></strong></span>
+                                            <span class="bet-type">내 베팅: <strong><?php echo getBetText($row['game_type'], $row['bet_option']); ?></strong></span>
                                             <span class="bet-amount"><?php echo number_format($row['bet_amount']); ?>P</span>
                                         </div>
-                                        <?php if ($row['is_win'] === '1'): ?>
+                                        <?php if ($row['status'] === 'win'): ?>
                                             <div class="win-amount">
                                                 당첨: <strong class="text-success"><?php echo number_format($row['win_amount']); ?>P</strong>
                                             </div>

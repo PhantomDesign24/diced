@@ -9,7 +9,70 @@
 /* ===================================
 * CSS 리셋 및 기본 설정
 * =================================== */
+/* ===================================
+* A/B/C 게임 베팅 버튼 스타일
+* =================================== */
 
+/* 베팅 버튼 기본 스타일 */
+.bet-button {
+    border: 2px solid #dee2e6;
+    background: #ffffff;
+    color: #495057;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.bet-button:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+    transform: translateY(-1px);
+}
+
+/* A 게임 버튼 */
+.bet-button[data-game="A"]:hover {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.bet-button[data-game="A"].active {
+    border-color: #0d6efd;
+    background-color: #0d6efd;
+    color: #ffffff;
+}
+
+/* B 게임 버튼 */
+.bet-button[data-game="B"]:hover {
+    border-color: #198754;
+    background-color: #d1e7dd;
+}
+
+.bet-button[data-game="B"].active {
+    border-color: #198754;
+    background-color: #198754;
+    color: #ffffff;
+}
+
+/* C 게임 버튼 */
+.bet-button[data-game="C"]:hover {
+    border-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+.bet-button[data-game="C"].active {
+    border-color: #ffc107;
+    background-color: #ffc107;
+    color: #212529;
+}
+
+/* 활성화된 버튼의 배율 텍스트 */
+.bet-button.active small {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.bet-button[data-game="C"].active small {
+    color: rgba(33, 37, 41, 0.7);
+}
 /* 게임 영역 전체 리셋 */
 .game-container * {
     box-sizing: border-box !important;

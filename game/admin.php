@@ -150,49 +150,72 @@ case 'update_member_info':
         $message_type = 'success';
     }
     break;		
-            case 'update_game_config':
-                $configs = [
-                    'game_status' => $_POST['game_status'] ?? '1',
-                    'min_bet' => (int)($_POST['min_bet'] ?? 1000),
-                    'max_bet' => (int)($_POST['max_bet'] ?? 100000),
-                    'betting_time' => (int)($_POST['betting_time'] ?? 60),
-                    'result_time' => (int)($_POST['result_time'] ?? 30),
-                    'game_interval' => (int)($_POST['game_interval'] ?? 120),
-                    'win_rate_high_low' => (float)($_POST['win_rate_high_low'] ?? 1.95),
-                    'win_rate_odd_even' => (float)($_POST['win_rate_odd_even'] ?? 1.95)
-                ];
+case 'update_game_config':
+    // 게임 기본 설정
+    updateConfigValue('game_status', $_POST['game_status'] ?? '0');
+    updateConfigValue('betting_time', $_POST['betting_time']);
+    updateConfigValue('result_time', $_POST['result_time']);
+    updateConfigValue('game_interval', $_POST['game_interval']);
+    updateConfigValue('min_bet', $_POST['min_bet']);
+    updateConfigValue('max_bet', $_POST['max_bet']);
+    
+    // A 게임 배율
+    updateConfigValue('game_a1_rate', $_POST['game_a1_rate']);
+    updateConfigValue('game_a2_rate', $_POST['game_a2_rate']);
+    
+    // B 게임 배율
+    updateConfigValue('game_b1_rate', $_POST['game_b1_rate']);
+    updateConfigValue('game_b2_rate', $_POST['game_b2_rate']);
+    
+    // C 게임 배율
+    updateConfigValue('game_c1_rate', $_POST['game_c1_rate']);
+    updateConfigValue('game_c2_rate', $_POST['game_c2_rate']);
+    
+    // 자동 회차 생성 설정
+    updateConfigValue('auto_generate_rounds', $_POST['auto_generate_rounds'] ?? '0');
+    updateConfigValue('auto_generate_interval', $_POST['auto_generate_interval']);
+    updateConfigValue('auto_generate_count', $_POST['auto_generate_count']);
+    
+    $message = '게임 설정이 저장되었습니다.';
+    $message_type = 'success';
+    break;
                 
-                foreach ($configs as $key => $value) {
-                    updateConfigValue($key, $value);
-                }
-                
-                $message = "게임 설정이 업데이트되었습니다.";
+case 'update_round_result':
+    $round_id = (int)($_POST['round_id'] ?? 0);
+    $game_a_result = $_POST['game_a_result'] ?? '';
+    $game_b_result = $_POST['game_b_result'] ?? '';
+    $game_c_result = $_POST['game_c_result'] ?? '';
+    
+    if ($round_id > 0 && in_array($game_a_result, ['1', '2']) && 
+        in_array($game_b_result, ['1', '2']) && 
+        in_array($game_c_result, ['1', '2'])) {
+        
+        $escaped_a = sql_real_escape_string($game_a_result);
+        $escaped_b = sql_real_escape_string($game_b_result);
+        $escaped_c = sql_real_escape_string($game_c_result);
+        
+        // 회차 정보 조회
+        $round_info = sql_fetch("SELECT * FROM dice_game_rounds WHERE round_id = {$round_id}");
+        
+        if ($round_info) {
+            // 상태에 관계없이 결과 업데이트 (진행중인 회차도 수정 가능)
+            $sql = "UPDATE dice_game_rounds SET 
+                        game_a_result = '{$escaped_a}', 
+                        game_b_result = '{$escaped_b}', 
+                        game_c_result = '{$escaped_c}',
+                        updated_at = NOW()
+                    WHERE round_id = {$round_id}";
+            
+            if (sql_query($sql)) {
+                $message = "회차 #{$round_info['round_number']}의 결과가 수정되었습니다. (A{$game_a_result}, B{$game_b_result}, C{$game_c_result})";
                 $message_type = 'success';
-                break;
-                
-            case 'force_complete_round':
-                $round_id = (int)($_POST['round_id'] ?? 0);
-                if ($round_id > 0) {
-                    // 강제 회차 완료 처리
-                    $dice1 = rand(1, 6);
-                    $dice2 = rand(1, 6);
-                    $dice3 = rand(1, 6);
-                    $total = $dice1 + $dice2 + $dice3;
-                    $is_high = $total >= 11 ? 1 : 0;
-                    $is_odd = $total % 2 ? 1 : 0;
-                    
-                    $now = date('Y-m-d H:i:s');
-                    $sql = "UPDATE dice_game_rounds SET 
-                                dice1 = {$dice1}, dice2 = {$dice2}, dice3 = {$dice3}, 
-                                total = {$total}, is_high = {$is_high}, is_odd = {$is_odd},
-                                status = 'completed', result_time = '{$now}'
-                            WHERE round_id = {$round_id}";
-                    sql_query($sql);
-                    
-                    $message = "회차 #{$round_id}가 강제 완료되었습니다. (결과: {$dice1}-{$dice2}-{$dice3})";
-                    $message_type = 'success';
-                }
-                break;
+            } else {
+                $message = "결과 수정 중 오류가 발생했습니다.";
+                $message_type = 'error';
+            }
+        }
+    }
+    break;
 case 'update_withdraw_account':
     $request_id = (int)($_POST['request_id'] ?? 0);
     $bank_name = $_POST['bank_name'] ?? '';
@@ -309,140 +332,138 @@ case 'update_withdraw_account':
                 }
                 break;
                 
-            case 'update_bet_amount':
-                $bet_id = (int)($_POST['bet_id'] ?? 0);
-                $new_amount = (int)($_POST['new_amount'] ?? 0);
+case 'update_bet_amount':
+    $bet_id = (int)($_POST['bet_id'] ?? 0);
+    $new_amount = (int)($_POST['new_amount'] ?? 0);
+    
+    if ($bet_id > 0 && $new_amount >= 0) {
+        // 기존 베팅 정보 조회
+        $bet_info = sql_fetch("SELECT * FROM dice_game_bets WHERE bet_id = {$bet_id}");
+        
+        if ($bet_info) {
+            $mb_id = $bet_info['mb_id'];
+            $old_amount = (int)$bet_info['bet_amount'];
+            $amount_diff = $new_amount - $old_amount; // 차액 계산
+            
+            // 회원 포인트 조회
+            $member_info = sql_fetch("SELECT mb_point FROM {$g5['member_table']} WHERE mb_id = '{$mb_id}'");
+            $current_point = (int)$member_info['mb_point'];
+            
+            // 포인트 차액 처리
+            if ($amount_diff > 0) {
+                // 베팅금액 증가 - 추가 포인트 차감
+                if ($current_point < $amount_diff) {
+                    $message = "회원의 보유 포인트가 부족합니다. (필요: " . number_format($amount_diff) . "P, 보유: " . number_format($current_point) . "P)";
+                    $message_type = 'error';
+                    break;
+                }
+            }
+            
+            // 트랜잭션 시작
+            sql_query("START TRANSACTION");
+            
+            try {
+                // 1. 베팅 금액 업데이트
+                $bet_update_sql = "UPDATE dice_game_bets SET bet_amount = {$new_amount} WHERE bet_id = {$bet_id}";
+                sql_query($bet_update_sql);
                 
-                if ($bet_id > 0 && $new_amount >= 0) {
-                    // 기존 베팅 정보 조회
-                    $bet_info = sql_fetch("SELECT * FROM dice_game_bets WHERE bet_id = {$bet_id}");
+                // 2. 회원 포인트 업데이트
+                $new_member_point = $current_point - $amount_diff;
+                $point_update_sql = "UPDATE {$g5['member_table']} SET mb_point = {$new_member_point} WHERE mb_id = '{$mb_id}'";
+                sql_query($point_update_sql);
+                
+                // 3. 포인트 내역 기록
+                $now = date('Y-m-d H:i:s');
+                if ($amount_diff > 0) {
+                    // 추가 차감
+                    $point_content = "베팅금액 수정 (추가 차감)";
+                    $point_amount = -$amount_diff;
+                } else {
+                    // 환불
+                    $point_content = "베팅금액 수정 (일부 환불)";
+                    $point_amount = abs($amount_diff);
+                }
+                
+                $point_log_sql = "
+                    INSERT INTO {$g5['point_table']} SET
+                        mb_id = '{$mb_id}',
+                        po_datetime = '{$now}',
+                        po_content = '{$point_content}',
+                        po_point = {$point_amount},
+                        po_use_point = 0,
+                        po_expired = 0,
+                        po_expire_date = '9999-12-31',
+                        po_mb_point = {$new_member_point},
+                        po_rel_table = 'dice_game_bets',
+                        po_rel_id = '{$bet_id}',
+                        po_rel_action = 'bet_amount_update'
+                ";
+                sql_query($point_log_sql);
+                
+                // 4. 당첨금이 있는 경우 재계산 (A/B/C 게임용)
+                if ($bet_info['status'] == 'win' && $bet_info['win_amount'] > 0) {
+                    // 해당 게임의 배율 조회
+                    $game_type = strtolower($bet_info['game_type']);
+                    $bet_option = $bet_info['bet_option'];
+                    $rate_key = "game_{$game_type}{$bet_option}_rate";
                     
-                    if ($bet_info) {
-                        $mb_id = $bet_info['mb_id'];
-                        $old_amount = (int)$bet_info['bet_amount'];
-                        $amount_diff = $new_amount - $old_amount; // 차액 계산
+                    $rate_sql = "SELECT config_value FROM dice_game_config WHERE config_key = '{$rate_key}'";
+                    $rate_result = sql_fetch($rate_sql);
+                    $rate = $rate_result ? floatval($rate_result['config_value']) : 2.0;
+                    
+                    // 새로운 당첨금 계산
+                    $new_win_amount = floor($new_amount * $rate);
+                    
+                    // 당첨금 업데이트
+                    $win_update_sql = "UPDATE dice_game_bets SET win_amount = {$new_win_amount} WHERE bet_id = {$bet_id}";
+                    sql_query($win_update_sql);
+                    
+                    // 당첨금 차액도 포인트에 반영
+                    $old_win_amount = (int)$bet_info['win_amount'];
+                    $win_diff = $new_win_amount - $old_win_amount;
+                    
+                    if ($win_diff != 0) {
+                        $final_member_point = $new_member_point + $win_diff;
+                        sql_query("UPDATE {$g5['member_table']} SET mb_point = {$final_member_point} WHERE mb_id = '{$mb_id}'");
                         
-                        // 회원 포인트 조회
-                        $member_info = sql_fetch("SELECT mb_point FROM {$g5['member_table']} WHERE mb_id = '{$mb_id}'");
-                        $current_point = (int)$member_info['mb_point'];
-                        
-                        // 포인트 차액 처리
-                        if ($amount_diff > 0) {
-                            // 베팅금액 증가 - 추가 포인트 차감
-                            if ($current_point < $amount_diff) {
-                                $message = "회원의 보유 포인트가 부족합니다. (필요: " . number_format($amount_diff) . "P, 보유: " . number_format($current_point) . "P)";
-                                $message_type = 'error';
-                                break;
-                            }
-                        }
-                        
-                        // 트랜잭션 시작
-                        sql_query("START TRANSACTION");
-                        
-                        try {
-                            // 1. 베팅 금액 업데이트
-                            $bet_update_sql = "UPDATE dice_game_bets SET bet_amount = {$new_amount} WHERE bet_id = {$bet_id}";
-                            sql_query($bet_update_sql);
-                            
-                            // 2. 회원 포인트 업데이트
-                            $new_member_point = $current_point - $amount_diff;
-                            $point_update_sql = "UPDATE {$g5['member_table']} SET mb_point = {$new_member_point} WHERE mb_id = '{$mb_id}'";
-                            sql_query($point_update_sql);
-                            
-                            // 3. 포인트 내역 기록
-                            $now = date('Y-m-d H:i:s');
-                            if ($amount_diff > 0) {
-                                // 추가 차감
-                                $point_content = "베팅금액 수정 (추가 차감)";
-                                $point_amount = -$amount_diff;
-                            } else {
-                                // 환불
-                                $point_content = "베팅금액 수정 (일부 환불)";
-                                $point_amount = abs($amount_diff);
-                            }
-                            
-                            $point_log_sql = "
-                                INSERT INTO {$g5['point_table']} SET
-                                    mb_id = '{$mb_id}',
-                                    po_datetime = '{$now}',
-                                    po_content = '{$point_content}',
-                                    po_point = {$point_amount},
-                                    po_use_point = 0,
-                                    po_expired = 0,
-                                    po_expire_date = '9999-12-31',
-                                    po_mb_point = {$new_member_point},
-                                    po_rel_table = 'dice_game_bets',
-                                    po_rel_id = '{$bet_id}',
-                                    po_rel_action = 'bet_amount_update'
-                            ";
-                            sql_query($point_log_sql);
-                            
-                            // 4. 당첨금이 있는 경우 재계산
-                            if ($bet_info['is_win'] == 1 && $bet_info['win_amount'] > 0) {
-                                // 배율 조회
-                                $config_sql = "SELECT config_value FROM dice_game_config WHERE config_key IN ('win_rate_high_low', 'win_rate_odd_even')";
-                                $config_result = sql_query($config_sql);
-                                $rates = array();
-                                while ($row = sql_fetch_array($config_result)) {
-                                    $rates[] = (float)$row['config_value'];
-                                }
-                                
-                                // 새로운 당첨금 계산
-                                $total_rate = $rates[0] * $rates[1];
-                                $new_win_amount = floor($new_amount * $total_rate);
-                                
-                                // 당첨금 업데이트
-                                $win_update_sql = "UPDATE dice_game_bets SET win_amount = {$new_win_amount} WHERE bet_id = {$bet_id}";
-                                sql_query($win_update_sql);
-                                
-                                // 당첨금 차액도 포인트에 반영
-                                $old_win_amount = (int)$bet_info['win_amount'];
-                                $win_diff = $new_win_amount - $old_win_amount;
-                                
-                                if ($win_diff != 0) {
-                                    $final_member_point = $new_member_point + $win_diff;
-                                    sql_query("UPDATE {$g5['member_table']} SET mb_point = {$final_member_point} WHERE mb_id = '{$mb_id}'");
-                                    
-                                    // 당첨금 차액 포인트 내역
-                                    $win_point_sql = "
-                                        INSERT INTO {$g5['point_table']} SET
-                                            mb_id = '{$mb_id}',
-                                            po_datetime = '{$now}',
-                                            po_content = '베팅금액 수정에 따른 당첨금 조정',
-                                            po_point = {$win_diff},
-                                            po_use_point = 0,
-                                            po_expired = 0,
-                                            po_expire_date = '9999-12-31',
-                                            po_mb_point = {$final_member_point},
-                                            po_rel_table = 'dice_game_bets',
-                                            po_rel_id = '{$bet_id}',
-                                            po_rel_action = 'win_amount_update'
-                                    ";
-                                    sql_query($win_point_sql);
-                                }
-                            }
-                            
-                            // 커밋
-                            sql_query("COMMIT");
-                            
-                            $message = "베팅금액이 " . number_format($old_amount) . "원에서 " . number_format($new_amount) . "원으로 수정되었습니다.";
-                            if ($amount_diff > 0) {
-                                $message .= " (추가 차감: " . number_format($amount_diff) . "P)";
-                            } else if ($amount_diff < 0) {
-                                $message .= " (환불: " . number_format(abs($amount_diff)) . "P)";
-                            }
-                            $message_type = 'success';
-                            
-                        } catch (Exception $e) {
-                            sql_query("ROLLBACK");
-                            $message = "베팅금액 수정 중 오류가 발생했습니다: " . $e->getMessage();
-                            $message_type = 'error';
-                        }
+                        // 당첨금 차액 포인트 내역
+                        $win_point_sql = "
+                            INSERT INTO {$g5['point_table']} SET
+                                mb_id = '{$mb_id}',
+                                po_datetime = '{$now}',
+                                po_content = '베팅금액 수정에 따른 당첨금 조정',
+                                po_point = {$win_diff},
+                                po_use_point = 0,
+                                po_expired = 0,
+                                po_expire_date = '9999-12-31',
+                                po_mb_point = {$final_member_point},
+                                po_rel_table = 'dice_game_bets',
+                                po_rel_id = '{$bet_id}',
+                                po_rel_action = 'win_amount_update'
+                        ";
+                        sql_query($win_point_sql);
                     }
                 }
-                break;
                 
-            case 'update_payment_config':
+                // 커밋
+                sql_query("COMMIT");
+                
+                $message = "베팅금액이 " . number_format($old_amount) . "원에서 " . number_format($new_amount) . "원으로 수정되었습니다.";
+                if ($amount_diff > 0) {
+                    $message .= " (추가 차감: " . number_format($amount_diff) . "P)";
+                } else if ($amount_diff < 0) {
+                    $message .= " (환불: " . number_format(abs($amount_diff)) . "P)";
+                }
+                $message_type = 'success';
+                
+            } catch (Exception $e) {
+                sql_query("ROLLBACK");
+                $message = "베팅금액 수정 중 오류가 발생했습니다: " . $e->getMessage();
+                $message_type = 'error';
+            }
+        }
+    }
+    break;            case 'update_payment_config':
                 $configs = [
                     'system_status' => $_POST['system_status'] ?? '1',
                     'min_charge_amount' => (int)($_POST['min_charge_amount'] ?? 10000),
@@ -564,9 +585,14 @@ while ($row = sql_fetch_array($result)) {
     $all_withdrawal_requests[] = $row;
 }
 
+// "/* 최근 베팅 내역 */" 부분을 찾아서 다음으로 교체:
+
 /* 최근 베팅 내역 */
 $recent_bets = array();
-$sql = "SELECT b.*, r.dice1, r.dice2, r.dice3, r.total, r.round_number FROM dice_game_bets b LEFT JOIN dice_game_rounds r ON b.round_id = r.round_id ORDER BY b.created_at DESC LIMIT 20";
+$sql = "SELECT b.*, r.round_number, r.game_a_result, r.game_b_result, r.game_c_result, r.status as round_status 
+        FROM dice_game_bets b 
+        LEFT JOIN dice_game_rounds r ON b.round_id = r.round_id 
+        ORDER BY b.created_at DESC LIMIT 20";
 $result = sql_query($sql);
 while ($row = sql_fetch_array($result)) {
     $recent_bets[] = $row;
@@ -1490,12 +1516,12 @@ document.getElementById('withdrawAccountEditForm').addEventListener('submit', fu
                 <tr>
                     <th>회차</th>
                     <th>회원</th>
-                    <th>대소</th>
-                    <th>홀짝</th>
+                    <th>게임</th>
+                    <th>선택</th>
                     <th>베팅금액</th>
-                    <th>주사위결과</th>
+                    <th>게임결과</th>
                     <th>당첨금</th>
-                    <th>결과</th>
+                    <th>상태</th>
                     <th>베팅시간</th>
                     <th>관리</th>
                 </tr>
@@ -1506,20 +1532,28 @@ document.getElementById('withdrawAccountEditForm').addEventListener('submit', fu
                     <td><?php echo $bet['round_number'] ?></td>
                     <td><?php echo htmlspecialchars($bet['mb_id']) ?></td>
                     <td>
-                        <span class="badge bg-primary"><?php echo $bet['bet_high_low'] === 'high' ? '대' : '소' ?></span>
+                        <?php 
+                        $game_color = $bet['game_type'] == 'A' ? 'primary' : ($bet['game_type'] == 'B' ? 'success' : 'warning');
+                        ?>
+                        <span class="badge bg-<?php echo $game_color ?>"><?php echo $bet['game_type'] ?>게임</span>
                     </td>
                     <td>
-                        <span class="badge bg-success"><?php echo $bet['bet_odd_even'] === 'odd' ? '홀' : '짝' ?></span>
+                        <span class="badge bg-secondary"><?php echo $bet['game_type'] . $bet['bet_option'] ?></span>
                     </td>
                     <td class="text-end"><?php echo number_format($bet['bet_amount']) ?>원</td>
                     <td>
-                        <?php if (!empty($bet['dice1'])): ?>
-                        <span class="badge bg-secondary"><?php echo $bet['dice1'] ?></span>
-                        <span class="badge bg-secondary"><?php echo $bet['dice2'] ?></span>
-                        <span class="badge bg-secondary"><?php echo $bet['dice3'] ?></span>
-                        <small>(<?php echo $bet['total'] ?>)</small>
+                        <?php if ($bet['round_status'] == 'completed' && $bet['game_a_result']): ?>
+                            <?php 
+                            $game_result = '';
+                            switch($bet['game_type']) {
+                                case 'A': $game_result = $bet['game_a_result']; break;
+                                case 'B': $game_result = $bet['game_b_result']; break;
+                                case 'C': $game_result = $bet['game_c_result']; break;
+                            }
+                            ?>
+                            <span class="badge bg-info"><?php echo $bet['game_type'] . $game_result ?></span>
                         <?php else: ?>
-                        <span class="text-muted">-</span>
+                            <span class="text-muted">-</span>
                         <?php endif; ?>
                     </td>
                     <td>
@@ -1530,13 +1564,29 @@ document.getElementById('withdrawAccountEditForm').addEventListener('submit', fu
                         <?php endif; ?>
                     </td>
                     <td>
-                        <?php if (is_null($bet['is_win'])): ?>
-                        <span class="badge bg-warning">대기</span>
-                        <?php elseif ($bet['is_win']): ?>
-                        <span class="badge bg-success">당첨</span>
-                        <?php else: ?>
-                        <span class="badge bg-danger">실패</span>
-                        <?php endif; ?>
+                        <?php 
+                        $status_text = '';
+                        $status_class = '';
+                        switch($bet['status']) {
+                            case 'pending':
+                                $status_text = '대기';
+                                $status_class = 'bg-warning';
+                                break;
+                            case 'win':
+                                $status_text = '당첨';
+                                $status_class = 'bg-success';
+                                break;
+                            case 'lose':
+                                $status_text = '실패';
+                                $status_class = 'bg-danger';
+                                break;
+                            case 'cancelled':
+                                $status_text = '취소';
+                                $status_class = 'bg-secondary';
+                                break;
+                        }
+                        ?>
+                        <span class="badge <?php echo $status_class ?>"><?php echo $status_text ?></span>
                     </td>
                     <td><?php echo date('Y-m-d H:i:s', strtotime($bet['created_at'])) ?></td>
                     <td>
@@ -1641,7 +1691,7 @@ $recent_stats = sql_fetch("
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h6 class="mb-1"><i class="bi bi-calendar-plus me-2"></i>회차 미리 생성 관리</h6>
-                <p class="mb-0 small">게임 회차를 미리 생성하고 주사위 결과값을 설정할 수 있습니다.</p>
+                <p class="mb-0 small">게임 회차를 미리 생성하고 A/B/C 게임 결과를 설정할 수 있습니다.</p>
                 <small class="text-muted">※ 미리 생성된 회차는 설정된 시간에 자동으로 진행됩니다.</small>
             </div>
             <div class="col-md-4 text-end">
@@ -1694,29 +1744,44 @@ $recent_stats = sql_fetch("
                         </tr>
                     </table>
                     
-                    <?php if ($active_round['status'] === 'scheduled'): ?>
+                    <?php if (!empty($active_round['game_a_result'])): ?>
                     <div class="text-center mt-3">
                         <small class="text-info">
                             <i class="bi bi-info-circle me-1"></i>
                             미리 설정된 결과: 
-                            <?php echo $active_round['dice1'] ?>-<?php echo $active_round['dice2'] ?>-<?php echo $active_round['dice3'] ?>
-                            (<?php echo $active_round['total'] ?>)
+                            A<?php echo $active_round['game_a_result'] ?> 
+                            B<?php echo $active_round['game_b_result'] ?> 
+                            C<?php echo $active_round['game_c_result'] ?>
                         </small>
                     </div>
                     <?php endif; ?>
-                    
-                    <div class="text-center mt-3">
-                        <form method="post" class="d-inline">
-                            <input type="hidden" name="action" value="force_complete_round">
-                            <input type="hidden" name="round_id" value="<?php echo $active_round['round_id'] ?>">
-                        </form>
-                    </div>
                     <?php else: ?>
                     <div class="text-center py-4">
                         <i class="bi bi-pause-circle text-muted" style="font-size: 3rem;"></i>
                         <p class="mt-2 text-muted">진행중인 회차가 없습니다</p>
                     </div>
                     <?php endif; ?>
+            <!-- 진행중인 회차 결과 수정 버튼 추가 -->
+            <?php if ($active_round): ?>
+            <div class="card mt-3">
+                <div class="card-header bg-warning text-white">
+                    <i class="bi bi-pencil-square me-2"></i>진행중인 회차 결과 수정
+                </div>
+                <div class="card-body">
+                    <button type="button" class="btn btn-warning w-100" 
+                            onclick="editActiveRoundResult(<?php echo $active_round['round_id'] ?>, <?php echo $active_round['round_number'] ?>, 
+                                '<?php echo $active_round['game_a_result'] ?>', 
+                                '<?php echo $active_round['game_b_result'] ?>', 
+                                '<?php echo $active_round['game_c_result'] ?>')">
+                        <i class="bi bi-pencil me-2"></i>
+                        <?php echo $active_round['round_number'] ?>회차 결과 수정
+                    </button>
+                    <small class="text-muted d-block mt-2">
+                        * 진행중인 회차의 결과를 미리 설정할 수 있습니다.
+                    </small>
+                </div>
+            </div>
+            <?php endif; ?>
                 </div>
             </div>
             
@@ -1726,37 +1791,60 @@ $recent_stats = sql_fetch("
                     <i class="bi bi-graph-up me-2"></i>최근 24시간 통계
                 </div>
                 <div class="card-body">
-                    <?php if ($recent_stats && $recent_stats['total_rounds'] > 0): 
-                        $high_rate = round(($recent_stats['high_count'] / $recent_stats['total_rounds']) * 100, 1);
-                        $odd_rate = round(($recent_stats['odd_count'] / $recent_stats['total_rounds']) * 100, 1);
+                    <?php 
+                    // A/B/C 게임 통계 조회
+                    $abc_stats = sql_fetch("
+                        SELECT 
+                            COUNT(DISTINCT r.round_id) as total_rounds,
+                            SUM(CASE WHEN r.game_a_result = '1' THEN 1 ELSE 0 END) as a1_count,
+                            SUM(CASE WHEN r.game_b_result = '1' THEN 1 ELSE 0 END) as b1_count,
+                            SUM(CASE WHEN r.game_c_result = '1' THEN 1 ELSE 0 END) as c1_count,
+                            SUM(r.total_players) as total_players_sum
+                        FROM dice_game_rounds r
+                        WHERE r.status = 'completed' 
+                        AND r.result_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                    ");
+                    
+                    if ($abc_stats && $abc_stats['total_rounds'] > 0): 
+                        $a1_rate = round(($abc_stats['a1_count'] / $abc_stats['total_rounds']) * 100, 1);
+                        $b1_rate = round(($abc_stats['b1_count'] / $abc_stats['total_rounds']) * 100, 1);
+                        $c1_rate = round(($abc_stats['c1_count'] / $abc_stats['total_rounds']) * 100, 1);
                     ?>
                     <div class="row text-center">
                         <div class="col-6">
-                            <h5><?php echo $recent_stats['total_rounds'] ?></h5>
+                            <h5><?php echo $abc_stats['total_rounds'] ?></h5>
                             <small class="text-muted">총 회차</small>
                         </div>
                         <div class="col-6">
-                            <h5><?php echo number_format($recent_stats['total_players_sum']) ?></h5>
+                            <h5><?php echo number_format($abc_stats['total_players_sum']) ?></h5>
                             <small class="text-muted">총 참여자</small>
                         </div>
                     </div>
                     <hr>
                     <div class="row text-center">
-                        <div class="col-6">
-                            <div class="progress" style="height: 25px;">
-                                <div class="progress-bar bg-primary" style="width: <?php echo $high_rate ?>%">
-                                    대 <?php echo $high_rate ?>%
+                        <div class="col-4">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-primary" style="width: <?php echo $a1_rate ?>%">
+                                    <?php echo $a1_rate ?>%
                                 </div>
                             </div>
-                            <small class="text-muted">대/소 비율</small>
+                            <small class="text-muted">A1 비율</small>
                         </div>
-                        <div class="col-6">
-                            <div class="progress" style="height: 25px;">
-                                <div class="progress-bar bg-success" style="width: <?php echo $odd_rate ?>%">
-                                    홀 <?php echo $odd_rate ?>%
+                        <div class="col-4">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" style="width: <?php echo $b1_rate ?>%">
+                                    <?php echo $b1_rate ?>%
                                 </div>
                             </div>
-                            <small class="text-muted">홀/짝 비율</small>
+                            <small class="text-muted">B1 비율</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-warning" style="width: <?php echo $c1_rate ?>%">
+                                    <?php echo $c1_rate ?>%
+                                </div>
+                            </div>
+                            <small class="text-muted">C1 비율</small>
                         </div>
                     </div>
                     <?php else: ?>
@@ -1780,11 +1868,11 @@ $recent_stats = sql_fetch("
                             <thead class="sticky-top bg-white">
                                 <tr>
                                     <th width="10%">회차</th>
-                                    <th width="20%">시작시간</th>
-                                    <th width="15%">주사위</th>
-                                    <th width="10%">합계</th>
-                                    <th width="15%">결과</th>
-                                    <th width="20%">메모</th>
+                                    <th width="25%">시작시간</th>
+                                    <th width="10%">A게임</th>
+                                    <th width="10%">B게임</th>
+                                    <th width="10%">C게임</th>
+                                    <th width="25%">메모</th>
                                     <th width="10%">관리</th>
                                 </tr>
                             </thead>
@@ -1801,20 +1889,13 @@ $recent_stats = sql_fetch("
                                         </small>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge bg-secondary"><?php echo $round['dice1'] ?></span>
-                                        <span class="badge bg-secondary"><?php echo $round['dice2'] ?></span>
-                                        <span class="badge bg-secondary"><?php echo $round['dice3'] ?></span>
+                                        <span class="badge bg-primary">A<?php echo $round['game_a_result'] ?></span>
                                     </td>
                                     <td class="text-center">
-                                        <strong><?php echo $round['total'] ?></strong>
+                                        <span class="badge bg-success">B<?php echo $round['game_b_result'] ?></span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge bg-<?php echo $round['is_high'] ? 'primary' : 'info' ?>">
-                                            <?php echo $round['is_high'] ? '대' : '소' ?>
-                                        </span>
-                                        <span class="badge bg-<?php echo $round['is_odd'] ? 'success' : 'warning' ?>">
-                                            <?php echo $round['is_odd'] ? '홀' : '짝' ?>
-                                        </span>
+                                        <span class="badge bg-warning">C<?php echo $round['game_c_result'] ?></span>
                                     </td>
                                     <td>
                                         <?php 
@@ -1828,7 +1909,7 @@ $recent_stats = sql_fetch("
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                onclick="editRoundResult(<?php echo $round['round_id'] ?>, <?php echo $round['round_number'] ?>)">
+                                                onclick="editRoundResultABC(<?php echo $round['round_id'] ?>, <?php echo $round['round_number'] ?>)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                     </td>
@@ -1859,8 +1940,9 @@ $recent_stats = sql_fetch("
                                 <tr>
                                     <th>회차</th>
                                     <th>완료시간</th>
-                                    <th>주사위</th>
-                                    <th>결과</th>
+                                    <th>A게임</th>
+                                    <th>B게임</th>
+                                    <th>C게임</th>
                                     <th>참여자</th>
                                     <th>총 베팅</th>
                                 </tr>
@@ -1871,18 +1953,13 @@ $recent_stats = sql_fetch("
                                     <td><?php echo $round['round_number'] ?></td>
                                     <td><?php echo date('m/d H:i', strtotime($round['result_time'])) ?></td>
                                     <td>
-                                        <span class="badge bg-secondary"><?php echo $round['dice1'] ?></span>
-                                        <span class="badge bg-secondary"><?php echo $round['dice2'] ?></span>
-                                        <span class="badge bg-secondary"><?php echo $round['dice3'] ?></span>
-                                        = <?php echo $round['total'] ?>
+                                        <span class="badge bg-primary">A<?php echo $round['game_a_result'] ?></span>
                                     </td>
                                     <td>
-                                        <span class="badge bg-<?php echo $round['is_high'] ? 'primary' : 'info' ?>">
-                                            <?php echo $round['is_high'] ? '대' : '소' ?>
-                                        </span>
-                                        <span class="badge bg-<?php echo $round['is_odd'] ? 'success' : 'warning' ?>">
-                                            <?php echo $round['is_odd'] ? '홀' : '짝' ?>
-                                        </span>
+                                        <span class="badge bg-success">B<?php echo $round['game_b_result'] ?></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">C<?php echo $round['game_c_result'] ?></span>
                                     </td>
                                     <td><?php echo number_format($round['total_players']) ?>명</td>
                                     <td><?php echo number_format($round['total_bet_amount']) ?>원</td>
@@ -1897,58 +1974,62 @@ $recent_stats = sql_fetch("
     </div>
 </div>
 
-<!-- 회차 수정 모달 -->
-<div class="modal fade" id="roundEditModal" tabindex="-1">
+
+<!-- 회차 수정 모달 (A/B/C 게임용) -->
+<div class="modal fade" id="roundEditModalABC" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">회차 결과 수정</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" id="roundEditForm">
+            <form method="post" id="roundEditFormABC">
                 <div class="modal-body">
                     <input type="hidden" name="action" value="update_round_result">
-                    <input type="hidden" name="round_id" id="edit_round_id">
+                    <input type="hidden" name="round_id" id="edit_round_id_abc">
                     
                     <h5 class="text-center mb-3">
-                        <span id="edit_round_number"></span>회차
+                        <span id="edit_round_number_abc"></span>회차
                     </h5>
                     
                     <div class="row">
                         <div class="col-4">
-                            <label class="form-label">주사위 1</label>
-                            <select class="form-select" name="dice1" id="edit_dice1" required>
-                                <?php for($i=1; $i<=6; $i++): ?>
-                                <option value="<?php echo $i ?>"><?php echo $i ?></option>
-                                <?php endfor; ?>
+                            <label class="form-label text-primary">A 게임</label>
+                            <select class="form-select" name="game_a_result" id="edit_game_a" required>
+                                <option value="1">A1</option>
+                                <option value="2">A2</option>
                             </select>
                         </div>
                         <div class="col-4">
-                            <label class="form-label">주사위 2</label>
-                            <select class="form-select" name="dice2" id="edit_dice2" required>
-                                <?php for($i=1; $i<=6; $i++): ?>
-                                <option value="<?php echo $i ?>"><?php echo $i ?></option>
-                                <?php endfor; ?>
+                            <label class="form-label text-success">B 게임</label>
+                            <select class="form-select" name="game_b_result" id="edit_game_b" required>
+                                <option value="1">B1</option>
+                                <option value="2">B2</option>
                             </select>
                         </div>
                         <div class="col-4">
-                            <label class="form-label">주사위 3</label>
-                            <select class="form-select" name="dice3" id="edit_dice3" required>
-                                <?php for($i=1; $i<=6; $i++): ?>
-                                <option value="<?php echo $i ?>"><?php echo $i ?></option>
-                                <?php endfor; ?>
+                            <label class="form-label text-warning">C 게임</label>
+                            <select class="form-select" name="game_c_result" id="edit_game_c" required>
+                                <option value="1">C1</option>
+                                <option value="2">C2</option>
                             </select>
                         </div>
                     </div>
                     
                     <div class="mt-3 text-center p-3 bg-light rounded">
-                        <div id="dice_preview">
-                            <h5>합계: <span id="preview_total">3</span></h5>
+                        <div id="game_preview">
+                            <h5>선택된 결과</h5>
                             <div>
-                                <span class="badge bg-primary me-1" id="preview_high_low">소</span>
-                                <span class="badge bg-success" id="preview_odd_even">홀</span>
+                                <span class="badge bg-primary me-1" id="preview_game_a">A1</span>
+                                <span class="badge bg-success me-1" id="preview_game_b">B1</span>
+                                <span class="badge bg-warning" id="preview_game_c">C1</span>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3" id="active_round_warning" style="display:none;">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        진행중인 회차의 결과를 수정하면 베팅 결과에 영향을 줍니다.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1961,62 +2042,63 @@ $recent_stats = sql_fetch("
 </div>
 
 <script>
-// 회차 결과 수정 모달
-function editRoundResult(roundId, roundNumber) {
-    document.getElementById('edit_round_id').value = roundId;
-    document.getElementById('edit_round_number').textContent = roundNumber;
+// 회차 결과 수정 모달 (A/B/C 게임용)
+function editRoundResultABC(roundId, roundNumber) {
+    document.getElementById('edit_round_id_abc').value = roundId;
+    document.getElementById('edit_round_number_abc').textContent = roundNumber;
     
     // 현재 값 가져오기 (scheduled_rounds 데이터 활용)
     const roundData = <?php echo json_encode($scheduled_rounds); ?>;
     const round = roundData.find(r => r.round_id == roundId);
     
     if (round) {
-        document.getElementById('edit_dice1').value = round.dice1;
-        document.getElementById('edit_dice2').value = round.dice2;
-        document.getElementById('edit_dice3').value = round.dice3;
-        updateDicePreview();
+        document.getElementById('edit_game_a').value = round.game_a_result || '1';
+        document.getElementById('edit_game_b').value = round.game_b_result || '1';
+        document.getElementById('edit_game_c').value = round.game_c_result || '1';
+        updateGamePreview();
     }
     
-    const modal = new bootstrap.Modal(document.getElementById('roundEditModal'));
+    // 경고 메시지 숨기기
+    document.getElementById('active_round_warning').style.display = 'none';
+    
+    const modal = new bootstrap.Modal(document.getElementById('roundEditModalABC'));
     modal.show();
 }
 
-// 주사위 미리보기 업데이트
-function updateDicePreview() {
-    const dice1 = parseInt(document.getElementById('edit_dice1').value);
-    const dice2 = parseInt(document.getElementById('edit_dice2').value);
-    const dice3 = parseInt(document.getElementById('edit_dice3').value);
-    const total = dice1 + dice2 + dice3;
+// 진행중인 회차 수정 함수
+function editActiveRoundResult(roundId, roundNumber, gameA, gameB, gameC) {
+    document.getElementById('edit_round_id_abc').value = roundId;
+    document.getElementById('edit_round_number_abc').textContent = roundNumber;
     
-    document.getElementById('preview_total').textContent = total;
+    // 현재 값 설정
+    document.getElementById('edit_game_a').value = gameA || '1';
+    document.getElementById('edit_game_b').value = gameB || '1';
+    document.getElementById('edit_game_c').value = gameC || '1';
     
-    const highLowBadge = document.getElementById('preview_high_low');
-    const oddEvenBadge = document.getElementById('preview_odd_even');
+    // 경고 메시지 표시
+    document.getElementById('active_round_warning').style.display = 'block';
     
-    // 대소
-    if (total >= 11) {
-        highLowBadge.textContent = '대';
-        highLowBadge.className = 'badge bg-primary me-1';
-    } else {
-        highLowBadge.textContent = '소';
-        highLowBadge.className = 'badge bg-info me-1';
-    }
+    updateGamePreview();
     
-    // 홀짝
-    if (total % 2 === 1) {
-        oddEvenBadge.textContent = '홀';
-        oddEvenBadge.className = 'badge bg-success';
-    } else {
-        oddEvenBadge.textContent = '짝';
-        oddEvenBadge.className = 'badge bg-warning';
-    }
+    const modal = new bootstrap.Modal(document.getElementById('roundEditModalABC'));
+    modal.show();
+}
+
+// 게임 미리보기 업데이트
+function updateGamePreview() {
+    const gameA = document.getElementById('edit_game_a').value;
+    const gameB = document.getElementById('edit_game_b').value;
+    const gameC = document.getElementById('edit_game_c').value;
+    
+    document.getElementById('preview_game_a').textContent = 'A' + gameA;
+    document.getElementById('preview_game_b').textContent = 'B' + gameB;
+    document.getElementById('preview_game_c').textContent = 'C' + gameC;
 }
 
 // 이벤트 리스너
-document.getElementById('edit_dice1').addEventListener('change', updateDicePreview);
-document.getElementById('edit_dice2').addEventListener('change', updateDicePreview);
-document.getElementById('edit_dice3').addEventListener('change', updateDicePreview);
-
+document.getElementById('edit_game_a').addEventListener('change', updateGamePreview);
+document.getElementById('edit_game_b').addEventListener('change', updateGamePreview);
+document.getElementById('edit_game_c').addEventListener('change', updateGamePreview);
 // 완료된 회차 DataTable
 $(document).ready(function() {
     $('#completedRoundsTable').DataTable({
@@ -2152,29 +2234,97 @@ document.getElementById('betEditForm').addEventListener('submit', function(e) {
                         </div>
                     </div>
                 </div>
+
+                <div class="form-section">
+                    <h5><i class="bi bi-arrow-repeat me-2"></i>자동 회차 생성 설정</h5>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="auto_generate_rounds" 
+                                       id="auto_generate_rounds" value="1" <?php echo getConfigValue('auto_generate_rounds', '0') == '1' ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="auto_generate_rounds">
+                                    자동 회차 생성 활성화
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">생성 간격(분)</label>
+                            <input type="number" class="form-control" name="auto_generate_interval" 
+                                   value="<?php echo getConfigValue('auto_generate_interval', '5') ?>" min="1" max="60">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">생성 개수</label>
+                            <input type="number" class="form-control" name="auto_generate_count" 
+                                   value="<?php echo getConfigValue('auto_generate_count', '20') ?>" min="1" max="100">
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-6">
                 <div class="form-section">
-                    <h5><i class="bi bi-trophy me-2"></i>당첨 배율 설정</h5>
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label">대소 배율</label>
-                            <input type="number" class="form-control" name="win_rate_high_low" 
-                                   value="<?php echo $current_settings['win_rate_high_low'] ?>" step="0.01" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">홀짝 배율</label>
-                            <input type="number" class="form-control" name="win_rate_odd_even" 
-                                   value="<?php echo $current_settings['win_rate_odd_even'] ?>" step="0.01" required>
-                        </div>
+                    <h5><i class="bi bi-trophy me-2"></i>게임별 당첨 배율 설정</h5>
+                    
+                    <!-- A 게임 배율 -->
+                    <div class="row g-3 mb-3">
                         <div class="col-12">
-                            <div class="alert alert-info">
-                                <small>
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    복합 베팅 시 실제 배율: 대소배율 × 홀짝배율 = <?php echo round($current_settings['win_rate_high_low'] * $current_settings['win_rate_odd_even'], 2) ?>배
-                                </small>
-                            </div>
+                            <label class="form-label fw-bold text-primary">A 게임 (주사위 합계 기준)</label>
+                            <small class="text-muted d-block">합계 3-10: A1 / 합계 11-18: A2</small>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">A1 배율</label>
+                            <input type="number" class="form-control" name="game_a1_rate" 
+                                   value="<?php echo getConfigValue('game_a1_rate', '2.0') ?>" step="0.01" min="1.01" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">A2 배율</label>
+                            <input type="number" class="form-control" name="game_a2_rate" 
+                                   value="<?php echo getConfigValue('game_a2_rate', '2.0') ?>" step="0.01" min="1.01" required>
+                        </div>
+                    </div>
+
+                    <!-- B 게임 배율 -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold text-success">B 게임 (홀짝 기준)</label>
+                            <small class="text-muted d-block">홀수: B1 / 짝수: B2</small>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">B1 배율</label>
+                            <input type="number" class="form-control" name="game_b1_rate" 
+                                   value="<?php echo getConfigValue('game_b1_rate', '2.0') ?>" step="0.01" min="1.01" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">B2 배율</label>
+                            <input type="number" class="form-control" name="game_b2_rate" 
+                                   value="<?php echo getConfigValue('game_b2_rate', '2.0') ?>" step="0.01" min="1.01" required>
+                        </div>
+                    </div>
+
+                    <!-- C 게임 배율 -->
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold text-warning">C 게임 (첫 주사위 기준)</label>
+                            <small class="text-muted d-block">첫 주사위 1-3: C1 / 첫 주사위 4-6: C2</small>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">C1 배율</label>
+                            <input type="number" class="form-control" name="game_c1_rate" 
+                                   value="<?php echo getConfigValue('game_c1_rate', '2.0') ?>" step="0.01" min="1.01" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">C2 배율</label>
+                            <input type="number" class="form-control" name="game_c2_rate" 
+                                   value="<?php echo getConfigValue('game_c2_rate', '2.0') ?>" step="0.01" min="1.01" required>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="bi bi-info-circle me-1"></i>
+                                각 게임별로 독립적으로 베팅 가능하며, 여러 게임에 동시 베팅도 가능합니다.
+                            </small>
                         </div>
                     </div>
                 </div>
